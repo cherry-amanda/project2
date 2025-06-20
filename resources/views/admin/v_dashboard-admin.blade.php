@@ -9,7 +9,7 @@
     /* UPGRADE TAMPAILAN DASHBOARD */
 
 .dashboard-hero {
-    background: linear-gradient(90deg, #6a11cb, #2575fc);
+    background: linear-gradient(90deg,rgb(22, 21, 23), #2575fc);
     color: white;
     border-radius: 16px;
     padding: 2rem;
