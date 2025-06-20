@@ -186,6 +186,7 @@
                 <option value="">-- Pilih Peran --</option>
                 <option value="vendor">Vendor</option>
                 <option value="klien">Klien</option>
+                <option value="">Admin</option>
             </select>
         </div>
 
