@@ -184,7 +184,6 @@
         <div class="input-group">
             <select name="role" required>
                 <option value="">-- Pilih Peran --</option>
-                <option value="admin">Admin</option>
                 <option value="vendor">Vendor</option>
                 <option value="klien">Klien</option>
             </select>
