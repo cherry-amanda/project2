@@ -10,6 +10,6 @@ class VerifyCsrfToken extends Middleware
      * Daftar URL yang tidak kena CSRF
      */
     protected $except = [
-        '/midtrans/webhook',
+        '/klien/midtrans/webhook',
     ];
 }

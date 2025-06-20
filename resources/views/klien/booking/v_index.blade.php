@@ -6,6 +6,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins&display=swap" rel="stylesheet">
 
 <style>
+    .btn-floating-cart {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 9999;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+    }
     .title-elegant {
         font-family: 'Great Vibes', cursive;
         font-size: 2.8rem;
@@ -100,7 +109,10 @@
                     </div>
                 </div>
             </div>
-
+            <a href="{{ route('klien.cart') }}" class="btn btn-primary position-fixed shadow-lg"
+                style="bottom: 30px; right: 30px; border-radius: 50%; width: 60px; height: 60px; z-index: 9999;">
+                    <i class="fas fa-shopping-cart fa-lg"></i>
+            </a>
             <!-- Tipe -->
             <div class="col-md-3 input-wrapper">
                 <label class="form-label fw-semibold">Tipe Paket:</label>
@@ -219,4 +231,8 @@
         @endforelse
     </div>
 </div>
+<!-- Tombol Keranjang -->
+
+
+
 @endsection

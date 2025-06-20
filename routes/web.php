@@ -110,20 +110,16 @@ Route::prefix('klien')->middleware('auth')->group(function () {
     
     // PROSES BOOKING + MIDTRANS
     Route::post('/checkout', [c_payment::class, 'proses'])->name('klien.payment.proses');
-    Route::post('/midtrans/callback', [c_payment::class, 'midtransCallback']);
-
-    // VIEW HASIL SNAP
-    Route::get('/pembayaran/snap/{id}', [c_payment::class, 'snap'])->name('klien.pembayaran.snap');
+    
+    
+    // ==========pembayaran klien ==========
+    Route::get('/pembayaran', [c_payment::class, 'list'])->name('klien.pembayaran.list');
+    Route::post('/pembayaran/proses', [c_payment::class, 'proses'])->name('klien.pembayaran.proses');
+    Route::get('/pembayaran/bayar/{id}', [c_payment::class, 'bayar'])->name('klien.pembayaran.bayar');
+    Route::get('/pembayaran/pelunasan/{id}', [c_payment::class, 'pelunasan'])->name('klien.pembayaran.pelunasan');
     Route::get('/pembayaran/sukses', [c_payment::class, 'sukses'])->name('klien.pembayaran.sukses');
     Route::get('/pembayaran/pending', [c_payment::class, 'pending'])->name('klien.pembayaran.pending');
-    Route::get('/pembayaran/gagal', [c_payment::class, 'gagal'])->name('klien.pembayaran.gagal');
-    Route::get('/pembayaran/batal', [c_payment::class, 'batal'])->name('klien.pembayaran.batal');
-
-    Route::get('/pembayaran', [c_payment::class, 'list'])->name('klien.pembayaran.list');
-    Route::get('/pembayaran/bayar/{id}', [c_payment::class, 'bayar'])->name('klien.pembayaran.bayar');
-    Route::get('//pelunasan/{id}', [c_payment::class, 'pelunasan'])->name('klien.pembayaran.pelunasan');
-    Route::post('/midtrans/webhook', [c_payment::class, 'midtransCallback']);
-    Route::post('/pembayaran/upload-bukti/{id}', [c_payment::class, 'uploadBukti'])->name('klien.pembayaran.uploadBukti');
+    Route::post('/pembayaran/upload/{id}', [c_payment::class, 'uploadBukti'])->name('klien.pembayaran.upload');
 
 
 
