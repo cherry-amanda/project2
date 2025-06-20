@@ -62,7 +62,17 @@ Route::middleware('auth')->group(function () {
 });
 
 
+Route::get('/', function () {
+    return view('landingpage');
+})->name('landing');
 
+Route::get('/galeri', function () {
+    return view('galeri');
+})->name('galeri');
+
+Route::get('/testimoni', function () {
+    return view('testimoni');
+})->name('testimoni');
 
 
 
@@ -124,27 +134,6 @@ Route::prefix('klien')->middleware('auth')->group(function () {
 
 
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /*
@@ -229,7 +218,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
     
 
-     // ========== Kelola Pesanan==========
+    // ========== Kelola Pesanan==========
     Route::get('pesanan', [c_pesanan::class, 'index'])->name('admin.pesanan.index');
     Route::get('pesanan/{id}', [c_pesanan::class, 'show'])->name('admin.pesanan.show');
     Route::post('pesanan/verifikasi/{id}', [c_pesanan::class, 'verifikasiPembayaran'])->name('admin.pesanan.verifikasi');
