@@ -53,12 +53,6 @@
                 <li><strong>Total Bayar:</strong> Rp{{ number_format($totalPaid, 0, ',', '.') }}</li>
                 @if($sisaTagihan > 0)<li><strong>Sisa Tagihan:</strong> Rp{{ number_format($sisaTagihan, 0, ',', '.') }}</li>@endif
             </ul>
-
-            @if ($sisaTagihan > 0 && $pelunasanPending && $dp && $dp->status === 'berhasil')
-                <a href="{{ route('klien.pembayaran.bayar', $pelunasanPending->id) }}" class="btn btn-primary">
-                    Bayar Pelunasan
-                </a>
-            @endif
         </div>
     </div>
 
@@ -114,9 +108,12 @@
                             @elseif ($isPelunasan && !$dpBerhasil)
                                 <button class="btn btn-secondary btn-sm" disabled>Menunggu DP</button>
                             @elseif ($shouldPayNow && $canPay)
-                                <a href="{{ route('klien.pembayaran.bayar', $pay->id) }}" class="btn btn-primary btn-sm">
+                                <button onclick="payWithSnap('{{ $pay->snap_token }}',
+                                        '{{ route('klien.pembayaran.sukses', $pay->id) }}',
+                                        '{{ route('klien.pembayaran.pending', $pay->id) }}')"
+                                        class="btn btn-primary btn-sm">
                                     Bayar Sekarang
-                                </a>
+                                </button>
                             @else
                                 <span class="text-muted">Menunggu pembayaran...</span>
                             @endif
@@ -165,6 +162,33 @@
         </div>
     @endif
 </div>
+
+{{-- === MIDTRANS SNAP SCRIPT === --}}
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
+<script>
+    function payWithSnap(token, successUrl, pendingUrl) {
+        if (!token) {
+            Swal.fire('Token tidak tersedia', 'Pembayaran tidak dapat dilanjutkan.', 'error');
+            return;
+        }
+
+        snap.pay(token, {
+            onSuccess: function(result) {
+                window.location.href = successUrl;
+            },
+            onPending: function(result) {
+                window.location.href = pendingUrl;
+            },
+            onError: function(result) {
+                Swal.fire('Pembayaran Gagal', 'Silakan coba lagi.', 'error');
+                console.error(result);
+            },
+            onClose: function() {
+                Swal.fire('Dibatalkan', 'Anda menutup jendela pembayaran.', 'info');
+            }
+        });
+    }
+</script>
 
 {{-- SweetAlert --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
