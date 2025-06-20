@@ -118,10 +118,7 @@
                                     Bayar Sekarang
                                 </a>
                             @else
-                                <form action="{{ route('klien.pembayaran.konfirmasiManual', $pay->id) }}" method="POST">
-                                    @csrf
-                                    <button class="btn btn-warning btn-sm">Konfirmasi Manual</button>
-                                </form>
+                                <span class="text-muted">Menunggu pembayaran...</span>
                             @endif
                         </td>
                     </tr>
@@ -155,7 +152,6 @@
                             </div>
                         </div>
                     </div>
-
                     @endforeach
                 </tbody>
             </table>

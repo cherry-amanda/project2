@@ -112,7 +112,7 @@ Route::prefix('klien')->middleware('auth')->group(function () {
     Route::get('/pembayaran', [c_payment::class, 'list'])->name('klien.pembayaran.list');
     Route::get('/pembayaran/bayar/{id}', [c_payment::class, 'bayar'])->name('klien.pembayaran.bayar');
     Route::get('//pelunasan/{id}', [c_payment::class, 'pelunasan'])->name('klien.pembayaran.pelunasan');
-    Route::post('/pembayaran/konfirmasi/{id}', [c_payment::class, 'konfirmasiManual'])->name('klien.pembayaran.konfirmasiManual');
+    Route::post('/midtrans/webhook', [c_payment::class, 'midtransCallback']);
     Route::post('/pembayaran/upload-bukti/{id}', [c_payment::class, 'uploadBukti'])->name('klien.pembayaran.uploadBukti');
 
 

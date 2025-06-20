@@ -40,32 +40,36 @@ class c_payment extends Controller
     {
         $payment = Payment::findOrFail($id);
 
-        if (!$payment->order_id) {
-            $payment->order_id = 'ORDER-' . strtoupper(Str::random(8)) . '-' . time();
-            $payment->save();
-        }
+        if (!$payment->snap_token || !$payment->order_id) {
+            // Generate Order ID & Snap Token via Midtrans
+            \Midtrans\Config::$serverKey = config('midtrans.serverKey');
+            \Midtrans\Config::$isProduction = config('midtrans.isProduction');
+            \Midtrans\Config::$isSanitized = config('midtrans.isSanitized');
+            \Midtrans\Config::$is3ds = config('midtrans.is3ds');
 
-        if (!$payment->snap_token || $payment->status != 'berhasil') {
+            $order_id = 'ORDER-' . time(); // atau gunakan $payment->id
+
             $params = [
                 'transaction_details' => [
-                    'order_id' => $payment->order_id,
+                    'order_id' => $order_id,
                     'gross_amount' => $payment->jumlah,
                 ],
                 'customer_details' => [
-                    'first_name' => auth()->user()->nama,
-                    'email' => auth()->user()->email,
-                    'phone' => auth()->user()->no_hp,
-                ]
+                    'first_name' => $payment->booking->nama_pasangan,
+                    'email' => 'test@example.com', // isi jika ada
+                ],
             ];
 
-            $snapToken = Snap::getSnapToken($params);
-            $payment->update(['snap_token' => $snapToken]);
-        } else {
-            $snapToken = $payment->snap_token;
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
+
+            $payment->order_id = $order_id;
+            $payment->snap_token = $snapToken;
+            $payment->save();
         }
 
-        return view('klien.pembayaran.v_snap', compact('snapToken', 'payment'));
+        return view('klien.v_bayar', compact('payment'));
     }
+
 
     public function proses(Request $request)
     {
@@ -160,6 +164,7 @@ class c_payment extends Controller
 
     public function midtransCallback(Request $request)
     {
+        \Log::info('✅ Webhook masuk:', $request->all()); // Tambahan log
         $notif = new Notification();
         $transaction = strtolower($notif->transaction_status);
         $order_id = $notif->order_id;
@@ -248,60 +253,6 @@ class c_payment extends Controller
             ->with('message', 'Pembayaran dibatalkan.');
     }
 
-    public function konfirmasiManual($id)
-    {
-        $payment = Payment::with('booking.pengguna')->findOrFail($id);
-
-        if ($payment->status === 'berhasil') {
-            return redirect()->back()->with('error', 'Pembayaran ini sudah berhasil.');
-        }
-
-        $payment->status = 'menunggu_verifikasi_admin';
-
-        // Hanya buat order_id kalau belum ada
-        if (!$payment->order_id) {
-            $payment->order_id = 'ORDER-' . strtoupper(Str::random(8)) . '-' . time();
-        }
-
-        $payment->save();
-
-        // === Buat pelunasan jika ini DP dan belum ada pelunasan ===
-        if ($payment->jenis === 'dp') {
-            $booking = $payment->booking;
-            $existingPelunasan = Payment::where('booking_id', $booking->id)
-                ->where('jenis', 'pelunasan')
-                ->exists();
-
-            if (!$existingPelunasan) {
-                $sisa = $booking->total_harga - $payment->jumlah;
-                $orderIdPelunasan = 'ORDER-' . strtoupper(Str::random(8)) . '-' . time();
-
-                $snapToken = Snap::getSnapToken([
-                    'transaction_details' => [
-                        'order_id' => $orderIdPelunasan,
-                        'gross_amount' => (int) $sisa,
-                    ],
-                    'customer_details' => [
-                        'first_name' => $booking->pengguna->nama,
-                        'email' => $booking->pengguna->email,
-                        'phone' => $booking->pengguna->no_hp,
-                    ]
-                ]);
-
-                Payment::create([
-                    'booking_id' => $booking->id,
-                    'order_id' => $orderIdPelunasan,
-                    'snap_token' => $snapToken,
-                    'jumlah' => $sisa,
-                    'status' => 'pending',
-                    'jenis' => 'pelunasan',
-                    'tanggal_bayar' => null,
-                ]);
-            }
-        }
-
-        return redirect()->back()->with('success', 'Permintaan konfirmasi manual berhasil dikirim. Mohon tunggu verifikasi admin.');
-    }
 
 
 
