@@ -25,5 +25,10 @@ class Package extends Model
     {
         return $this->belongsTo(Vendor::class);
     }
+    public function vendorServices()
+    {
+        return $this->hasMany(PackageRab::class, 'package_id')->with('vendorService');
+    }
+
 
 }

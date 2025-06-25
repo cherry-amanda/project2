@@ -26,7 +26,7 @@
                     @foreach($services as $i => $service)
                         <tr>
                             <td>{{ $i+1 }}</td>
-                            <td>{{ $service->vendor->nama ?? '-' }}</td>
+                            <td>{{ $service->vendor->pengguna->nama ?? '-' }}</td>
                             <td>{{ $service->nama_item }}</td>
                             <td>{{ $service->kategori }}</td>
                             <td>Rp {{ number_format($service->harga, 0, ',', '.') }}</td>

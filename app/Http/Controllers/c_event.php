@@ -112,11 +112,20 @@ class c_event extends Controller
     }
     public function togglePublish($id)
     {
-        $event = Event::findOrFail($id);
-        $event->is_published = !$event->is_published;
-        $event->save();
+        try {
+            $event = Event::findOrFail($id);
+            $event->is_published = !$event->is_published;
+            $event->save();
 
-        return response()->json(['success' => true]);
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
+
+
 
 }

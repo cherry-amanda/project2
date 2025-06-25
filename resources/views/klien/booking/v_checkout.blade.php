@@ -1,123 +1,101 @@
-@extends('layout.v_template4')  
+@extends('layout.v_template4')
 @section('title', 'Checkout')
+
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+@endpush
 
 @section('content')
 <div class="container py-4">
     <form id="checkoutForm">
         @csrf
+        <input type="hidden" name="tanggal" id="tanggalHidden">
+        <input type="hidden" name="jenis" id="jenisPembayaran">
+        <input type="hidden" name="metode" id="metodeHidden">
+
         <div class="row g-4">
-            {{-- INFORMASI ACARA --}}
             <div class="col-lg-8">
                 <div class="card p-4 shadow-sm mb-4">
-                    <h5 class="mb-3">Detail Acara</h5>
+                    <h5>Detail Acara</h5>
+                    @foreach($cartItems as $item)
+                        <div class="d-flex align-items-center mb-3 p-2 border rounded">
+                            <img src="{{ asset('images/foto_paket/' . $item->package->foto) }}" width="100" height="70" class="rounded me-3" style="object-fit: cover;">
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">{{ $item->package->nama }}</div>
+                                <div class="small text-muted">Jumlah: {{ $item->qty }}</div>
+                                <div class="small text-muted">Harga Satuan: Rp{{ number_format($item->package->harga_total, 0, ',', '.') }}</div>
+                            </div>
+                        </div>
 
-                    @if(isset($cartItems))
-                        @foreach($cartItems as $item)
-                            <input type="hidden" name="package_id[]" value="{{ $item->package->id }}">
-                            <input type="hidden" name="quantities[{{ $item->package->id }}]" value="{{ $item->qty }}">
-                        @endforeach
-                    @elseif(isset($package))
-                        <input type="hidden" name="package_id[]" value="{{ $package->id }}">
-                        <input type="hidden" name="quantities[{{ $package->id }}]" value="1">
-                    @endif
-
-                    <input type="hidden" name="tanggal" id="tanggalHidden">
-                    <input type="hidden" name="jenis" id="jenisPembayaran">
+                        @if ($loop->first)
+                        <input type="hidden" name="package_id[]" value="{{ $item->package->id }}">
+                        <input type="hidden" name="quantities[{{ $item->package->id }}]" value="{{ $item->qty }}">
+                        @endif
+                    @endforeach
 
                     <label class="form-label">Tanggal Acara</label>
-                    <input type="text" id="tanggal" class="form-control mb-3" placeholder="Pilih tanggal" required readonly autocomplete="off">
+                    <input type="text" id="tanggal" class="form-control mb-3" placeholder="Pilih tanggal" required autocomplete="off">
 
                     <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label">Alamat Akad</label>
-                            <input type="text" name="alamat_akad" class="form-control mb-2" placeholder="Alamat Akad" required>
+                            <label>Alamat Akad</label>
+                            <input type="text" name="alamat_akad" class="form-control" required value="{{ old('alamat_akad', $lastBooking->alamat_akad ?? '') }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Alamat Resepsi</label>
-                            <input type="text" name="alamat_resepsi" class="form-control mb-2" placeholder="Alamat Resepsi" required>
+                            <label>Alamat Resepsi</label>
+                            <input type="text" name="alamat_resepsi" class="form-control" required value="{{ old('alamat_resepsi', $lastBooking->alamat_resepsi ?? '') }}">
                         </div>
                     </div>
                 </div>
 
                 <div class="card p-4 shadow-sm">
-                    <h5 class="mb-3">Informasi Klien</h5>
+                    <h5>Informasi Klien</h5>
                     <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label">Nama Pasangan</label>
-                            <input type="text" name="nama_pasangan" class="form-control mb-2" placeholder="Nama Pasangan" required>
+                            <label>Nama Pasangan</label>
+                            <input type="text" name="nama_pasangan" class="form-control" required value="{{ old('nama_pasangan', $lastBooking->nama_pasangan ?? '') }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">No KTP</label>
-                            <input type="text" name="no_ktp" class="form-control mb-2" placeholder="No KTP" required>
+                            <label>No KTP</label>
+                            <input type="text" name="no_ktp" class="form-control" required value="{{ old('no_ktp', $lastBooking->no_ktp ?? '') }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">No HP</label>
-                            <input type="text" name="no_hp" value="{{ $pengguna->no_hp ?? '' }}" class="form-control mb-2" required>
+                            <label>No HP</label>
+                            <input type="text" name="no_hp" class="form-control" required value="{{ old('no_hp', $pengguna->no_hp ?? '') }}">
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- RINGKASAN BELANJA --}}
             <div class="col-lg-4">
                 <div class="card p-4 shadow-sm">
-                    <h5 class="mb-3">Ringkasan Belanja</h5>
                     @php
-                        $total = 0;
-                        if (isset($cartItems)) {
-                            foreach($cartItems as $item) {
-                                $total += $item->package->harga_total * $item->qty;
-                            }
-                        } elseif (isset($package)) {
-                            $total = $package->harga_total;
-                        }
+                        $total = collect($cartItems)->sum(fn($i) => $i->package->harga_total * $i->qty);
                         $dp = $total * 0.5;
                     @endphp
-
-                    <ul class="list-group list-group-flush mb-3">
+                    <h5>Ringkasan Belanja</h5>
+                    <ul class="list-group mb-3">
                         <li class="list-group-item d-flex justify-content-between">
                             <span>Total Harga</span>
-                            <span id="totalHarga">Rp{{ number_format($total, 0, ',', '.') }}</span>
+                            <strong>Rp{{ number_format($total) }}</strong>
                         </li>
                         <li class="list-group-item d-flex justify-content-between">
                             <span>Bayar Sekarang</span>
-                            <span id="bayarSekarang">Rp{{ number_format($dp, 0, ',', '.') }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between fw-bold">
-                            <span>Sisa Pembayaran</span>
-                            <span id="sisaPembayaran">Rp{{ number_format($dp, 0, ',', '.') }}</span>
+                            <strong id="bayarSekarang">Rp{{ number_format($dp) }}</strong>
                         </li>
                     </ul>
 
-                    <div class="mb-3">
-                        <label class="form-label">Metode Pembayaran</label>
-                        <select name="metode_pembayaran" class="form-select" id="metodePembayaran" required>
-                            <option value="dp">DP (50%)</option>
-                            <option value="full">Pelunasan Penuh</option>
-                        </select>
-                    </div>
+                    <label>Jenis Pembayaran</label>
+                    <select id="metodePembayaran" class="form-select mb-3" required>
+                        <option value="dp">DP (50%)</option>
+                        <option value="full">Pelunasan Penuh</option>
+                    </select>
 
-                    <div class="mb-3">
-                        @if(isset($cartItems))
-                            @foreach($cartItems as $item)
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <img src="{{ asset('images/foto_paket/' . $item->package->foto) }}" width="60" height="50" style="object-fit: cover; border-radius: 8px;">
-                                    <div>
-                                        <strong>{{ $item->package->nama }}</strong><br>
-                                        <small>x{{ $item->qty }}</small>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @elseif(isset($package))
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <img src="{{ asset('images/foto_paket/' . $package->foto) }}" width="60" height="50" style="object-fit: cover; border-radius: 8px;">
-                                <div>
-                                    <strong>{{ $package->nama }}</strong><br>
-                                    <small>x1</small>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
+                    <label>Pilih Cara Bayar</label>
+                    <select id="metodeBayar" class="form-select mb-3" required>
+                        <option value="transfer">Transfer (Midtrans)</option>
+                        <option value="cash">Bayar Langsung (Cash)</option>
+                    </select>
 
                     <button type="submit" class="btn btn-primary w-100">Bayar Sekarang</button>
                 </div>
@@ -126,19 +104,32 @@
     </form>
 </div>
 
-{{-- Midtrans & JS --}}
-<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
+<style>
+    .form-label { font-weight: 600; }
+    .form-control, .form-select {
+        border-radius: 0.5rem;
+        border: 1px solid #000 !important;
+        padding: 0.5rem 1rem;
+        background-color: #fff;
+    }
+</style>
+@endsection
+
+@push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    const blockedDates = @json($blockedDates);
+document.addEventListener('DOMContentLoaded', function () {
     const tanggalInput = document.getElementById("tanggal");
     const tanggalHidden = document.getElementById("tanggalHidden");
     const metodePembayaran = document.getElementById("metodePembayaran");
+    const metodeBayar = document.getElementById("metodeBayar");
+    const metodeHidden = document.getElementById("metodeHidden");
+    const jenisPembayaran = document.getElementById("jenisPembayaran");
     const bayarSekarangEl = document.getElementById("bayarSekarang");
-    const sisaPembayaran = document.getElementById("sisaPembayaran");
+
     const total = {{ $total }};
     const dp = total * 0.5;
 
@@ -146,76 +137,72 @@
         dateFormat: "Y-m-d",
         locale: "id",
         minDate: "today",
-        disable: blockedDates,
-        onChange: function(selectedDates, dateStr) {
+        disable: @json($blockedDates ?? []),
+        onChange: function (selectedDates, dateStr) {
             tanggalHidden.value = dateStr;
         }
     });
 
-    metodePembayaran.addEventListener("change", function () {
-        if (this.value === "dp") {
-            bayarSekarangEl.innerText = "Rp" + dp.toLocaleString("id-ID");
-            sisaPembayaran.innerText = "Rp" + dp.toLocaleString("id-ID");
-        } else {
-            bayarSekarangEl.innerText = "Rp" + total.toLocaleString("id-ID");
-            sisaPembayaran.innerText = "Rp0";
-        }
-    });
+    metodePembayaran.addEventListener("change", updateBayar);
+    metodeBayar.addEventListener("change", updateBayar);
 
-    document.getElementById("checkoutForm").addEventListener("submit", function(e) {
+    function updateBayar() {
+        const jenis = metodePembayaran.value;
+        const jumlah = jenis === "dp" ? dp : total;
+        bayarSekarangEl.innerText = "Rp" + jumlah.toLocaleString("id-ID");
+    }
+
+    document.getElementById("checkoutForm").addEventListener("submit", function (e) {
         e.preventDefault();
 
-        const metode = metodePembayaran.value;
-        document.getElementById("jenisPembayaran").value = metode === "dp" ? "dp" : "full";
+        const form = this;
+        const formData = new FormData(form);
+        formData.set("tanggal", tanggalHidden.value);
+        formData.set("jenis", metodePembayaran.value);
+        formData.set("metode", metodeBayar.value);
 
         if (!tanggalHidden.value) {
             Swal.fire('Tanggal kosong', 'Silakan pilih tanggal acara.', 'warning');
             return;
         }
 
-        const formData = new FormData(this);
+        Swal.fire({
+            title: 'Memproses Pembayaran...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
 
         fetch("{{ route('klien.pembayaran.proses') }}", {
             method: "POST",
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
             body: formData
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.snap_token) {
-                snap.pay(data.snap_token, {
-                    onSuccess: function () {
-                        window.location.href = data.redirect_success;
-                    },
-                    onPending: function () {
-                        window.location.href = data.redirect_pending;
-                    },
-                    onError: function () {
-                        Swal.fire('Gagal', 'Pembayaran gagal.', 'error');
-                    },
-                    onClose: function () {
-                        Swal.fire('Dibatalkan', 'Anda menutup jendela pembayaran.', 'info');
-                    }
-                });
+        .then(async res => {
+            if (!res.ok) {
+                const errorText = await res.text();
+                Swal.fire('Error', `Terjadi kesalahan dari server: ${errorText}`, 'error');
+                console.error("Server responded with an error:", errorText);
+                throw new Error(errorText);
+            }
+            return res.json();
+        })
+        .then(json => {
+            Swal.close();
+
+            if (json.snap_token) {
+                window.location.href = json.redirect_snap;
             } else {
-                Swal.fire('Gagal', data.message || 'Token tidak tersedia.', 'error');
+                window.location.href = json.redirect_pending;
             }
         })
-        .catch(() => {
-            Swal.fire('Error', 'Terjadi kesalahan.', 'error');
+        .catch(err => {
+            Swal.fire('Gagal', 'Koneksi gagal atau server down.', 'error');
+            console.error("Fetch error:", err);
         });
     });
+});
 </script>
-
-<style>
-    .card { border: none; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.08); }
-    .form-label { font-weight: 500; }
-    .form-control, .form-select {
-        border-radius: 8px;
-        padding: 0.6rem 1rem;
-        border: 1px solid #000 !important;
-    }
-</style>
-@endsection

@@ -6,10 +6,14 @@ use Illuminate\Http\Request;
 use App\Models\Package;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Booking;
+use App\Models\BookingAssignment;
+use App\Models\VendorService;
+
 
 class c_cart extends Controller
 {
     // Tampilkan daftar paket
+
     public function index(Request $request)
     {
         $packages = Package::query();
@@ -30,7 +34,6 @@ class c_cart extends Controller
         return view('klien.booking.v_index', compact('packages'));
     }
 
-    // Tambah ke keranjang
     public function addToCart(Request $request, $id)
     {
         $package = Package::findOrFail($id);
@@ -52,7 +55,6 @@ class c_cart extends Controller
         return redirect()->route('klien.cart')->with('success', 'Paket berhasil ditambahkan ke keranjang.');
     }
 
-    // Hapus dari keranjang
     public function removeFromCart($id)
     {
         $cart = session()->get('cart', []);
@@ -66,7 +68,6 @@ class c_cart extends Controller
         return redirect()->route('klien.cart')->with('error', 'Paket tidak ditemukan dalam keranjang.');
     }
 
-    // Tampilkan isi keranjang
     public function cart()
     {
         $cart = session()->get('cart', []);
@@ -86,7 +87,6 @@ class c_cart extends Controller
         return view('klien.booking.v_cart', compact('cartItems'));
     }
 
-    // Proses ke halaman checkout (dari keranjang)
     public function checkout(Request $request)
     {
         $cart = session()->get('cart', []);
@@ -104,9 +104,8 @@ class c_cart extends Controller
 
             $package = Package::find($packageId);
             if ($package) {
-                $qty = isset($quantities[$packageId]) ? (int)$quantities[$packageId] : 1;
-
-                $cartItems[] = (object)[
+                $qty = $quantities[$packageId] ?? 1;
+                $cartItems[] = (object) [
                     'id' => $packageId,
                     'qty' => $qty,
                     'package' => $package,
@@ -116,20 +115,19 @@ class c_cart extends Controller
         }
 
         if (empty($cartItems)) {
-            return redirect()->route('klien.cart')->with('error', 'Tidak ada paket yang valid untuk checkout.');
+            return redirect()->route('klien.cart')->with('error', 'Tidak ada paket valid.');
         }
 
         $blockedDates = Booking::pluck('tanggal')->toArray();
         $pengguna = Auth::user();
+        $lastBooking = Booking::where('pengguna_id', $pengguna->id)->latest()->first();
 
-        return view('klien.booking.v_checkout', compact('cartItems', 'blockedDates', 'pengguna'));
+        return view('klien.booking.v_checkout', compact('cartItems', 'blockedDates', 'pengguna', 'lastBooking'));
     }
 
-    // Checkout langsung dari tombol (bukan keranjang)
     public function checkoutNow($id)
     {
         $package = Package::findOrFail($id);
-
         $cartItems = [
             (object)[
                 'id' => $package->id,
@@ -141,7 +139,12 @@ class c_cart extends Controller
 
         $blockedDates = Booking::pluck('tanggal')->toArray();
         $pengguna = Auth::user();
+        $lastBooking = Booking::where('pengguna_id', $pengguna->id)->latest()->first();
 
-        return view('klien.booking.v_checkout', compact('cartItems', 'blockedDates', 'pengguna'));
+        return view('klien.booking.v_checkout', compact('cartItems', 'blockedDates', 'pengguna', 'lastBooking'));
     }
+    
+
+    
+
 }

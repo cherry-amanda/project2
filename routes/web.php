@@ -9,7 +9,7 @@ use App\Http\Controllers\C_Klien;
 use App\Http\Controllers\c_date;
 use App\Http\Controllers\c_event;
 use App\Http\Controllers\c_package;
-use App\Http\Controllers\c_vendor;
+use App\Http\Controllers\C_Vendor;
 use App\Http\Controllers\c_vendorservice;
 use App\Http\Controllers\c_vendor_profile;
 use App\Http\Controllers\c_pengguna;
@@ -22,6 +22,7 @@ use App\Http\Controllers\c_vendorBooking;
 use App\Http\Controllers\c_vendorServiceAdmin;
 use App\Http\Controllers\c_cart;
 use App\Http\Controllers\c_pesanan;
+use App\Http\Controllers\c_booking_assignment;
 
 
 
@@ -52,11 +53,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/dashboard', [C_Admin::class, 'dashboard'])->name('admin.dashboard');
      
 
-    Route::get('/dashboard-vendor', function () {
+    Route::get('/vendor/dahboard', function () {
         return view('vendor.v_dashboard-vendor');
     })->name('vendor.dashboard');
 
-    Route::get('/dashboard-klien', function () {
+    Route::get('/klien/dashboard', function () {
         return view('klien.v_dashboard-klien');
     })->name('klien.dashboard');
 });
@@ -86,8 +87,10 @@ Route::prefix('klien')->middleware('auth')->group(function () {
   
 
     // ==========Dashboard klien ==========
-    Route::get('/dashboard', [C_Klien::class, 'dashboard'])->name('klien.dashboard');
-    Route::get('/dashboard/data', [C_Klien::class, 'dashboardData'])->name('klien.dashboard.data');
+
+    Route::get('/dashboard', [C_Klien::class, 'index'])->name('klien.dashboard');
+
+
 
 
 
@@ -107,6 +110,8 @@ Route::prefix('klien')->middleware('auth')->group(function () {
     Route::post('/booking/remove-from-cart/{id}', [c_cart::class, 'removeFromCart'])->name('klien.cart.remove');
     Route::get('/booking/pesan/{id}', [c_cart::class, 'checkoutNow'])->name('klien.checkout.now');
     Route::get('/booking/checkout', [c_cart::class, 'checkout'])->name('klien.checkout');
+    Route::post('/process-checkout', [c_cart::class, 'processCheckout'])->name('klien.process.checkout');
+
     
     // PROSES BOOKING + MIDTRANS
     Route::post('/checkout', [c_payment::class, 'proses'])->name('klien.payment.proses');
@@ -114,22 +119,25 @@ Route::prefix('klien')->middleware('auth')->group(function () {
     
     // ==========pembayaran klien ==========
     Route::get('/pembayaran', [c_payment::class, 'list'])->name('klien.pembayaran.list');
-    Route::post('/pembayaran/proses', [c_payment::class, 'proses'])->name('klien.pembayaran.proses');
     Route::get('/pembayaran/bayar/{id}', [c_payment::class, 'bayar'])->name('klien.pembayaran.bayar');
-    Route::get('/pembayaran/pelunasan/{id}', [c_payment::class, 'pelunasan'])->name('klien.pembayaran.pelunasan');
-    Route::get('/pembayaran/sukses', [c_payment::class, 'sukses'])->name('klien.pembayaran.sukses');
-    Route::get('/pembayaran/pending', [c_payment::class, 'pending'])->name('klien.pembayaran.pending');
+    Route::get('klien/pembayaran/pelunasan/{id}', [c_payment::class, 'buatPelunasanManual'])->name('klien.pembayaran.pelunasan');
     Route::post('/pembayaran/upload/{id}', [c_payment::class, 'uploadBukti'])->name('klien.pembayaran.upload');
 
-
-
-
-
-
-
-
-
 });
+
+// Pastikan pakai auth
+Route::middleware('auth')->group(function () {
+    Route::post('/klien/pembayaran/proses', [c_payment::class, 'proses'])->name('klien.pembayaran.proses');
+    Route::get('/klien/pembayaran/snap', [c_payment::class, 'snapView'])->name('klien.pembayaran.snap');
+
+    Route::get('/klien/pembayaran/sukses', fn() => 'Pembayaran sukses.')->name('klien.pembayaran.sukses');
+    Route::get('/klien/pembayaran/pending', fn() => 'Pembayaran sedang diproses.')->name('klien.pembayaran.pending');
+});
+
+
+
+
+
 
 
 /*
@@ -166,6 +174,9 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/event/{id}/detail', [c_event::class, 'show'])->name('admin.event.show');
     Route::delete('/event/{id}', [c_event::class, 'destroy'])->name('admin.event.destroy');
     Route::post('/event/{id}/toggle-publish', [c_event::class, 'togglePublish'])->name('admin.event.togglePublish');
+
+
+
 
     // Penugasan Tim (bagian dari event, tapi ditulis eksplisit biar jelas)
     Route::post('event/assign-task', [c_event::class, 'assignTask'])->name('admin.event.assignTask');
@@ -217,7 +228,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     // ========== Kelola Pesanan==========
     Route::get('pesanan', [c_pesanan::class, 'index'])->name('admin.pesanan.index');
     Route::get('pesanan/{id}', [c_pesanan::class, 'show'])->name('admin.pesanan.show');
-    Route::post('pesanan/verifikasi/{id}', [c_pesanan::class, 'verifikasiPembayaran'])->name('admin.pesanan.verifikasi');
+    Route::post('/pesanan/konfirmasi/{id}', [c_pesanan::class, 'konfirmasi'])->name('admin.pesanan.konfirmasi');
+
 
 
     // ========== Kelola Keuangan==========
@@ -228,6 +240,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/grafik-keuangan', [c_keuangan::class, 'grafik'])->name('admin.keuangan.grafik');
     Route::get('/export-keuangan-excel', [c_keuangan::class, 'exportExcel'])->name('admin.keuangan.exportExcel');
     Route::get('/export-keuangan-pdf', [c_keuangan::class, 'exportPdf'])->name('admin.keuangan.exportPdf');
+
 
 
 
@@ -257,6 +270,8 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 */
 
 Route::prefix('vendor')->middleware('auth')->group(function () {
+    Route::get('/dashboard', [c_vendor::class, 'dashboard'])->name('vendor.dashboard');
+
 
     // ========== Kelola Jasa & produk ==========
     Route::get('vendorservice', [c_vendorservice::class, 'index'])->name('vendor.service.index');
@@ -276,9 +291,11 @@ Route::prefix('vendor')->middleware('auth')->group(function () {
 
 
     // ========== Pesanan di Vendor ==========
-    Route::get('pesanan', [c_vendorBooking::class, 'index'])->name('vendor.pesanan');
-    Route::get('pesanan/{id}', [c_vendorBooking::class, 'detail'])->name('vendor.pesanan.detail');
-    Route::post('pesanan/{id}/status', [c_vendorBooking::class, 'updateStatus'])->name('vendor.pesanan.status');
+    // Route untuk vendor
+    Route::get('/pesanan', [c_booking_assignment::class, 'index'])->name('vendor.pesanan.index');
+    Route::put('/pesanan/{id}', [c_booking_assignment::class, 'updateStatus'])->name('vendor.pesanan.update');
+
+
 
 
 

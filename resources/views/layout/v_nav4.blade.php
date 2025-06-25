@@ -1,38 +1,56 @@
-<aside class="sidenav navbar navbar-vertical navbar-expand-xs border-radius-lg fixed-start bg-white my-2" id="sidenav-main">
-  <div class="sidenav-header">
-    <a class="navbar-brand px-4 py-3 m-0" href="#">
-      <span class="ms-1 text-sm text-dark">Wedding Organizer</span>
-    </a>
+<aside class="sidenav navbar navbar-vertical navbar-expand-xs border-radius-xl fixed-start bg-white my-3 shadow-sm" id="sidenav-main">
+  <div class="d-flex align-items-center mb-3 ps-2">
+    <span style="font-size: 28px; color:#6C63FF; font-weight: bold;">∞</span>
+    <span class="ms-2 fw-semibold text-dark" style="font-size: 18px;">Infinity Wedding</span>
   </div>
+
   <hr class="horizontal dark mt-0 mb-2">
+
   <div class="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
-    <ul class="navbar-nav">
-      <li class="nav-item">
-        <a class="nav-link {{ request()->is('user') ? 'active bg-gradient-dark text-white' : 'text-dark' }}" href="/user">
-          <i class="material-symbols-rounded opacity-5">dashboard</i>
-          <span class="nav-link-text ms-1">Dashboard</span>
+    <ul class="navbar-nav px-2">
+
+      {{-- DASHBOARD --}}
+      <li class="nav-item mb-1">
+        <a class="nav-link {{ request()->is('klien/dashboard') ? 'active bg-gradient-primary text-white' : 'text-dark' }} d-flex align-items-center rounded-3 px-3 py-2" href="/klien/dashboard">
+          <span class="material-symbols-rounded me-2">dashboard</span>
+          <span class="nav-link-text">Dashboard</span>
         </a>
       </li>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link text-dark" href="/klien/profile">
-          <i class="material-symbols-rounded opacity-5">table_view</i>
-          <span class="nav-link-text ms-1">Profile</span>
+
+      {{-- PROFILE --}}
+      <li class="nav-item mb-1">
+        <a class="nav-link {{ request()->is('klien/profile') ? 'active bg-gradient-primary text-white' : 'text-dark' }} d-flex align-items-center rounded-3 px-3 py-2" href="/klien/profile">
+          <span class="material-symbols-rounded me-2">person</span>
+          <span class="nav-link-text">Profil</span>
         </a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link text-dark" href="/klien/booking">
-          <i class="material-symbols-rounded opacity-5">table_view</i>
-          <span class="nav-link-text ms-1">Booking List</span>
+
+      {{-- BOOKING LIST --}}
+      <li class="nav-item mb-1">
+        <a class="nav-link {{ request()->is('klien/booking') ? 'active bg-gradient-primary text-white' : 'text-dark' }} d-flex align-items-center rounded-3 px-3 py-2" href="/klien/booking">
+          <span class="material-symbols-rounded me-2">event</span>
+          <span class="nav-link-text">Booking</span>
         </a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link text-dark" href="/klien/pembayaran">
-          <i class="material-symbols-rounded opacity-5">table_view</i>
-          <span class="nav-link-text ms-1">Riwayat Booking</span>
+
+      {{-- PEMBAYARAN --}}
+      <li class="nav-item mb-1">
+        <a class="nav-link {{ request()->is('klien/pembayaran') ? 'active bg-gradient-primary text-white' : 'text-dark' }} d-flex align-items-center rounded-3 px-3 py-2" href="/klien/pembayaran">
+          <span class="material-symbols-rounded me-2">receipt_long</span>
+          <span class="nav-link-text">Riwayat</span>
         </a>
       </li>
-      
+
+      {{-- ACCOUNT --}}
+      <li class="nav-item mt-4">
+        <h6 class="ps-3 text-muted text-uppercase text-xs">Akun</h6>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link d-flex align-items-center rounded-3 px-3 py-2 text-danger" href="/logout">
+          <span class="material-symbols-rounded me-2">logout</span> Log Out
+        </a>
+      </li>
     </ul>
   </div>
 </aside>

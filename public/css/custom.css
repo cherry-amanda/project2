@@ -1,0 +1,7 @@
+.modal-content {
+    font-size: 14px;
+    color: #333;
+}
+.table th, .table td {
+    vertical-align: middle;
+}

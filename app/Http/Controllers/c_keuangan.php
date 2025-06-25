@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -20,7 +21,6 @@ class c_keuangan extends Controller
         return view('admin.keuangan.v_list', compact('data', 'totalMasuk', 'totalKeluar', 'saldo'));
     }
 
-
     public function create()
     {
         return view('admin.keuangan.v_add');
@@ -29,28 +29,31 @@ class c_keuangan extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'jenis' => 'required',
-            'kategori' => 'required',
+            'jenis'      => 'required',
+            'kategori'   => 'required',
             'keterangan' => 'nullable',
-            'nominal' => 'required|numeric',
-            'tanggal' => 'required|date',
-            'relasi_id' => 'nullable|exists:payment,id',
-            'bukti' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
+            'nominal'    => 'required|numeric',
+            'tanggal'    => 'required|date',
+            'relasi_id'  => 'nullable|exists:payment,id',
+            'bukti'      => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
         $buktiPath = null;
+
         if ($request->hasFile('bukti')) {
-            $buktiPath = $request->file('bukti')->store('bukti_keuangan', 'public');
+            $filename = $request->file('bukti')->hashName(); // nama unik
+            $request->file('bukti')->move(public_path('images/bukti_pembayaran'), $filename);
+            $buktiPath = 'images/bukti_pembayaran/' . $filename;
         }
 
         Keuangan::create([
-            'jenis' => $request->jenis,
-            'kategori' => $request->kategori,
+            'jenis'      => $request->jenis,
+            'kategori'   => $request->kategori,
             'keterangan' => $request->keterangan,
-            'nominal' => $request->nominal,
-            'tanggal' => $request->tanggal,
-            'relasi_id' => $request->relasi_id,
-            'bukti' => $buktiPath
+            'nominal'    => $request->nominal,
+            'tanggal'    => $request->tanggal,
+            'relasi_id'  => $request->relasi_id,
+            'bukti'      => $buktiPath,
         ]);
 
         return redirect()->route('admin.keuangan.index')->with('success', 'Data keuangan berhasil ditambahkan.');
@@ -78,5 +81,13 @@ class c_keuangan extends Controller
         $data = Keuangan::all();
         $pdf = PDF::loadView('admin.keuangan.v_pdf', compact('data'));
         return $pdf->download('keuangan.pdf');
+    }
+    public function konfirmasi($id)
+    {
+        $data = Keuangan::findOrFail($id);
+        $data->status = 'terkonfirmasi';
+        $data->save();
+
+        return response()->json(['message' => 'Berhasil dikonfirmasi']);
     }
 }

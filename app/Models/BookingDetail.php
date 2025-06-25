@@ -8,29 +8,29 @@ class BookingDetail extends Model
 {
     protected $table = 'booking_details';
     protected $fillable = [
-        'booking_id', 'vendor_id', 'vendor_service_id',
-        'event_date', 'start_time', 'end_time', 'location', 'status'
+        'booking_id',
+        'vendor_service_id', // Kolom ini ada di tabel Anda
+        'qty', // Kolom ini ada di tabel Anda
+        'harga_total', // Kolom ini ada di tabel Anda
+        // 'vendor_id', // Ini tidak terlihat di gambar tabel booking_details yang Anda berikan
+        // 'event_date', 'start_time', 'end_time', 'location', 'status' // Ini tidak terlihat di gambar tabel booking_details Anda
     ];
 
-    
-    
-    // Model BookingDetail.php
-        public function vendor()
+    public function booking()
     {
-        return $this->belongsTo(\App\Models\Pengguna::class, 'vendor_id');
-    }
-
-    // BookingDetail.php
-    public function vendorService() {
-        return $this->belongsTo(VendorService::class, 'vendor_service_id');
-    }
-    public function booking() {
         return $this->belongsTo(Booking::class, 'booking_id');
     }
-    public function klien() {
-        return $this->hasOneThrough(Pengguna::class, Booking::class, 'id', 'id', 'booking_id', 'pengguna_id');
+
+    // Jika vendor_service_id sebenarnya merujuk ke tabel 'packages',
+    // maka relasi ini harusnya ke Package.
+    // Karena Anda mengirim package_id dari cart, mari asumsikan ini merujuk ke Package.
+    public function vendorService() // Nama fungsi ini misleading jika merujuk ke Package
+    {
+        return $this->belongsTo(Package::class, 'vendor_service_id');
     }
 
-
-
+    public function klien()
+    {
+        return $this->hasOneThrough(Pengguna::class, Booking::class, 'id', 'id', 'booking_id', 'pengguna_id');
+    }
 }

@@ -4,138 +4,146 @@
 @section('styles')
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
 <style>
-    /* UPGRADE TAMPAILAN DASHBOARD */
-
-.dashboard-hero {
-    background: linear-gradient(90deg,rgb(22, 21, 23), #2575fc);
-    color: white;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+body {
+    background: #f0f4f3;
 }
-
+.dashboard-hero {
+    background: linear-gradient(135deg, #c8e6c9, #a5d6a7);
+    color: #1b5e20;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+}
 .stat-card {
     background: white;
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 1.5rem;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
-    border-left: 5px solid transparent;
+    border-left: 6px solid #81c784;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    transition: 0.3s ease;
 }
-
 .stat-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-    border-left: 5px solid #2575fc;
 }
-
 .stat-icon {
-    font-size: 2.2rem;
-    opacity: 0.85;
-    transition: all 0.2s ease-in-out;
+    font-size: 2.5rem;
+    color: #388e3c;
 }
-
-.stat-card:hover .stat-icon {
-    transform: scale(1.1);
-}
-
 .section-title {
     font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 1rem;
+    color: #2e7d32;
 }
-
 .list-group-item {
     border: none;
     font-weight: 500;
-    transition: all 0.2s ease;
-    border-radius: 8px;
-    padding: 10px 14px;
+    transition: 0.2s;
+    border-radius: 10px;
 }
-
 .list-group-item:hover {
-    background-color: #f8f9fa;
-    cursor: pointer;
+    background-color: #f1f8f6;
 }
-
-.badge {
-    font-size: 0.75rem;
+.card-smooth {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1rem 1.5rem;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.04);
+    margin-bottom: 1rem;
 }
-
+.link-card {
+    text-decoration: none;
+    color: inherit;
+}
 footer {
-    font-size: 0.875rem;
-    color: #777;
+    font-size: 0.85rem;
+    color: #789262;
+    margin-top: 3rem;
 }
-
 </style>
 @endsection
 
 @section('content')
 <div class="container-fluid px-4">
 
-    {{-- Hero Section --}}
-    <div class="dashboard-hero mb-4 d-flex justify-content-between align-items-center flex-wrap">
+    {{-- Hero --}}
+    <div class="dashboard-hero d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="mb-1">Selamat Datang, Admin!</h3>
-            <p class="mb-0">Pantau seluruh aktivitas Wedding Organizer kamu dalam satu tampilan.</p>
+            <h2 class="fw-bold mb-1">Halo, Admin 👋</h2>
+            <p class="mb-0">Pantau seluruh data klien, booking, dan jadwal dengan mudah dan cepat.</p>
         </div>
-        <div>
-            <i class="bi bi-person-circle fs-1 text-white"></i>
-        </div>
+        <i class="bi bi-person-circle display-3"></i>
     </div>
 
     {{-- Statistik --}}
     <div class="row g-4 mb-4">
-        <div class="col-md-3 col-sm-6">
+        <div class="col-md-3">
             <a href="{{ route('admin.pesanan.index') }}" class="link-card">
                 <div class="stat-card text-center">
-                    <i class="bi bi-cart-check stat-icon text-success"></i>
-                    <div class="fw-bold fs-4 mt-2">{{ $todaysOrders ?? 0 }}</div>
-                    <div class="text-muted">Today's Orders</div>
+                    <i class="bi bi-cart-check-fill stat-icon"></i>
+                    <h4 class="mt-3 fw-bold">{{ $todaysOrders ?? 0 }}</h4>
+                    <p class="text-muted mb-0">Pesanan Hari Ini</p>
                 </div>
             </a>
         </div>
-
-        <div class="col-md-3 col-sm-6">
+        <div class="col-md-3">
             <a href="{{ route('admin.pesanan.index') }}" class="link-card">
                 <div class="stat-card text-center">
-                    <i class="bi bi-journal-check stat-icon text-warning"></i>
-                    <div class="fw-bold fs-4 mt-2">{{ $totalBooking ?? 0 }}</div>
-                    <div class="text-muted">Total Orders</div>
+                    <i class="bi bi-journal-check stat-icon"></i>
+                    <h4 class="mt-3 fw-bold">{{ $totalBooking ?? 0 }}</h4>
+                    <p class="text-muted mb-0">Total Booking</p>
                 </div>
             </a>
         </div>
-
-        <div class="col-md-3 col-sm-6">
+        <div class="col-md-3">
             <a href="{{ route('admin.keuangan.index') }}" class="link-card">
                 <div class="stat-card text-center">
-                    <i class="bi bi-cash-coin stat-icon text-primary"></i>
-                    <div class="fw-bold fs-4 mt-2">Rp {{ number_format($totalPembayaran ?? 0, 0, ',', '.') }}</div>
-                    <div class="text-muted">Total Profit</div>
+                    <i class="bi bi-cash-coin stat-icon"></i>
+                    <h4 class="mt-3 fw-bold">Rp {{ number_format($totalPembayaran ?? 0, 0, ',', '.') }}</h4>
+                    <p class="text-muted mb-0">Total Pemasukan</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <i class="bi bi-people-fill stat-icon"></i>
+                <h4 class="mt-3 fw-bold">{{ $newClientsThisWeek ?? 0 }}</h4>
+                <p class="text-muted mb-0">Klien Baru (Minggu Ini)</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Booking Menunggu Konfirmasi --}}
+    <div class="row g-4 mb-4">
+        <div class="col-md-12">
+            <a href="{{ route('admin.pesanan.index') }}" class="link-card">
+                <div class="stat-card d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="section-title mb-1">⏳ Booking Menunggu Konfirmasi</h5>
+                        <p class="text-muted mb-0">Total pesanan yang belum dikonfirmasi</p>
+                    </div>
+                    <h4 class="fw-bold text-danger mb-0">{{ $pendingVerifications ?? 0 }}</h4>
                 </div>
             </a>
         </div>
     </div>
 
-    {{-- Tipe Layanan --}}
-    <div class="row g-3">
+    {{-- Tipe Layanan & Info --}}
+    <div class="row g-4 mb-4">
         <div class="col-md-8">
             <div class="stat-card">
-                <h5 class="section-title">Notifikasi / Info</h5>
-                <p class="text-muted">Kamu bisa mengelola booking, vendor, pembayaran, dan lainnya dengan lebih mudah melalui navigasi sidebar atau statistik dashboard ini.</p>
+                <h5 class="section-title">📢 Info & Notifikasi</h5>
+                <p class="text-muted">Kelola semua kegiatan, vendor, dan keuangan dengan navigasi di sidebar kiri.</p>
             </div>
         </div>
         <div class="col-md-4">
             <div class="stat-card">
-                <h6 class="section-title">Tipe Layanan</h6>
+                <h5 class="section-title">🎁 Tipe Layanan</h5>
                 <ul class="list-group list-group-flush">
                     @forelse ($dataTipePaket as $tipe)
                         <a href="{{ route('admin.package.index', ['tipe' => $tipe->tipe]) }}" class="link-card">
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span><i class="bi bi-box2-heart me-2 text-info"></i>{{ ucfirst($tipe->tipe) }}</span>
-                                <span class="badge bg-primary rounded-pill">{{ $tipe->total }}</span>
+                                <span><i class="bi bi-box2-heart me-2 text-success"></i>{{ ucfirst($tipe->tipe) }}</span>
+                                <span class="badge rounded-pill bg-success">{{ $tipe->total }}</span>
                             </li>
                         </a>
                     @empty
@@ -146,9 +154,34 @@ footer {
         </div>
     </div>
 
-    <footer class="text-muted text-center mt-4">
-        © {{ date('Y') }} Infinity Organizer
-    </footer>
+    {{-- Jadwal 7 Hari --}}
+    <div class="row g-4 mb-5">
+        <div class="col-12">
+            <div class="stat-card">
+                <h5 class="section-title">📅 Jadwal 7 Hari ke Depan</h5>
+                @forelse($upcomingEvents as $event)
+                    <div class="card-smooth d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="text-dark">
+                                <i class="bi bi-calendar-event me-2 text-primary"></i>
+                                {{ \Carbon\Carbon::parse($event->booking->tanggal)->translatedFormat('l, d M Y') }}
+                            </strong>
+                            <div class="text-muted small mt-1">
+                                Klien: {{ $event->booking->pengguna->nama ?? '-' }}<br>
+                                Pasangan: {{ $event->booking->nama_pasangan ?? '-' }}
+                            </div>
+                        </div>
+                        <a href="{{ route('admin.event.show', $event->id) }}" class="btn btn-outline-success rounded-pill btn-sm">Lihat Detail</a>
+                    </div>
+                @empty
+                    <p class="text-muted">Tidak ada kegiatan dalam 7 hari ke depan.</p>
+                @endforelse
+            </div>
+        </div>
+    </div>
 
+    <footer class="text-center text-muted">
+        &copy; {{ date('Y') }} Infinity Organizer | Admin Dashboard
+    </footer>
 </div>
 @endsection

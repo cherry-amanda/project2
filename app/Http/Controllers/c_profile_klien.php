@@ -33,6 +33,7 @@ class c_profile_klien extends Controller
             'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
+        // Ambil data pengguna
         $pengguna = Pengguna::find(Auth::id());
         $pengguna->nama = $request->nama;
         $pengguna->email = $request->email;
@@ -45,23 +46,35 @@ class c_profile_klien extends Controller
 
         $pengguna->save();
 
-        // Cek atau buat data klien
-        $klien = Klien::firstOrNew(['id_pengguna' => Auth::id()]);
+        // Ambil atau buat data klien
+        $klien = Klien::firstOrNew(['id_pengguna' => $pengguna->id]);
 
+        // Proses upload foto
         if ($request->hasFile('foto')) {
             $foto = $request->file('foto');
-            $namaFile = time() . '_' . $foto->getClientOriginalName();
-            $foto->move(public_path('images/foto_klien'), $namaFile);
+            $ext = $foto->getClientOriginalExtension();
+            $namaFile = 'foto_' . time() . '.' . $ext;
 
-            // Hapus foto lama jika ada
-            if ($klien->foto && file_exists(public_path('images/foto_klien/' . $klien->foto))) {
-                unlink(public_path('images/foto_klien/' . $klien->foto));
+            // Buat folder kalau belum ada
+            $folderPath = public_path('images/foto_klien');
+            if (!file_exists($folderPath)) {
+                mkdir($folderPath, 0755, true);
             }
 
+            // Hapus foto lama kalau ada
+            if ($klien->foto) {
+                $oldPath = public_path('images/foto_klien/' . $klien->foto);
+                if (file_exists($oldPath)) {
+                    @unlink($oldPath); // pakai @ untuk hindari warning
+                }
+            }
+
+            // Simpan foto baru
+            $foto->move($folderPath, $namaFile);
             $klien->foto = $namaFile;
         }
 
-        $klien->id_pengguna = Auth::id(); // wajib kalau datanya baru
+        $klien->id_pengguna = $pengguna->id; // wajib untuk firstOrNew
         $klien->save();
 
         return redirect()->route('klien.profile')->with('success', 'Profil berhasil diperbarui.');
