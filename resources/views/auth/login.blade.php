@@ -192,6 +192,7 @@
 
         <button type="submit">Login</button>
         <a href="{{ route('register') }}">Belum punya akun? Daftar</a>
+        <a href="{{ route('landing') }}">kembali</a>
     </form>
 </div>
 

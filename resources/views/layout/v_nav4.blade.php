@@ -43,7 +43,7 @@
 
       {{-- ACCOUNT --}}
       <li class="nav-item mt-4">
-        <h6 class="ps-3 text-muted text-uppercase text-xs">Akun</h6>
+        <h6 class="ps-3 text-muted text-uppercase text-xs">Logout</h6>
       </li>
 
       <li class="nav-item">

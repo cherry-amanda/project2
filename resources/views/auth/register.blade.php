@@ -190,6 +190,7 @@
         </div>
 
         <button type="submit">Register</button>
+        <a href="{{ route('login') }}">Sudah punya akun</a>
     </form>
 </div>
 

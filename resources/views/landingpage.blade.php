@@ -142,7 +142,7 @@
       <h2>Hubungi Kami</h2>
       <ul class="actions">
         <li><span class="icon fa-phone"></span> <a href="#">(087123094141)</a></li>
-        <li><span class="icon fa-envelope"></span> <a href="#">Wedding Organizer@gmail.com</a></li>
+        <li><span class="icon fa-envelope"></span> <a href="#">infinitywedding@gmail.com</a></li>
         <li><span class="icon fa-map-marker"></span> Jl. Soekarno Hatta, NO. 9, Bandung </li>
       </ul>
     </div>
