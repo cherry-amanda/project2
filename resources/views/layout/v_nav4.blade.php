@@ -47,10 +47,17 @@
       </li>
 
       <li class="nav-item">
-        <a class="nav-link d-flex align-items-center rounded-3 px-3 py-2 text-danger" href="/logout">
+        <a href="#"
+          class="nav-link d-flex align-items-center rounded-3 px-3 py-2 text-danger"
+          onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
           <span class="material-symbols-rounded me-2">logout</span> Log Out
         </a>
+
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+          @csrf
+        </form>
       </li>
+
     </ul>
   </div>
 </aside>

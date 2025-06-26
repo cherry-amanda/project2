@@ -42,11 +42,18 @@
 
       {{-- LOGOUT --}}
       <li class="nav-item">
-        <a class="nav-link d-flex align-items-center rounded-3 px-3 py-2 {{ request()->is('logout') ? 'bg-gradient-danger text-white' : 'text-dark' }}" href="/logout">
+        <a href="#"
+          class="nav-link d-flex align-items-center rounded-3 px-3 py-2 {{ request()->is('logout') ? 'bg-gradient-danger text-white' : 'text-dark' }}"
+          onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
           <i class="material-symbols-rounded me-2">logout</i>
           <span class="nav-link-text">Keluar</span>
         </a>
+
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+          @csrf
+        </form>
       </li>
+
 
     </ul>
   </div>

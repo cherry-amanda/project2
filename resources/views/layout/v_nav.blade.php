@@ -29,7 +29,6 @@
           ['href' => '/admin/package', 'icon' => 'redeem', 'label' => 'Kelola Paket WO'],
           ['href' => '/admin/pesanan', 'icon' => 'shopping_cart', 'label' => 'Kelola Pesanan'],
           ['href' => '/admin/dates', 'icon' => 'calendar_month', 'label' => 'Kelola Tanggal'],
-          ['href' => '/admin/invoice', 'icon' => 'receipt_long', 'label' => 'Invoice'],
           ['href' => '/admin/pengguna', 'icon' => 'group', 'label' => 'Kelola User'],
           ['href' => '/admin/keuangan', 'icon' => 'account_balance_wallet', 'label' => 'Kelola Keuangan'],
         ];
@@ -50,11 +49,18 @@
 
       
 
-      <li class="nav-item">
-        <a class="nav-link {{ request()->is('logout') ? 'active bg-gradient-primary text-white' : 'text-dark' }} d-flex align-items-center rounded-3 px-3 py-2" href="/logout">
-          <span class="material-symbols-rounded me-2">logout</span> Log Out
-        </a>
-      </li>
+        <li class="nav-item">
+          <a class="nav-link {{ request()->is('logout') ? 'active bg-gradient-primary text-white' : 'text-dark' }} d-flex align-items-center rounded-3 px-3 py-2"
+            href="#"
+            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <span class="material-symbols-rounded me-2">logout</span> Log Out
+          </a>
+
+          <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            @csrf
+          </form>
+        </li>
+
 
       
     </ul>
