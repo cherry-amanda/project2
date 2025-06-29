@@ -20,7 +20,7 @@
                         <tr class="align-middle small text-uppercase">
                             <th>No</th>
                             <th>Nama Pasangan</th>
-                            <th>Tanggal</th>
+                            <th>Tanggal Bayar</th>
                             <th>Jenis</th>
                             <th>Jumlah</th>
                             <th>Status</th>

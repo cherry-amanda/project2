@@ -10,12 +10,17 @@ class Payment extends Model
 
     protected $fillable = [
         'booking_id',
+        'no_transaksi',
+        'order_id',
         'jenis',
         'jumlah',
         'metode',
         'status',
         'snap_token',
         'tanggal_bayar',
+        'keterangan',
+        'bukti_bayar',
+        'cash_notified_1',
     ];
 
     public function booking()

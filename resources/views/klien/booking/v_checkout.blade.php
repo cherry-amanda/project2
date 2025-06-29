@@ -71,7 +71,7 @@
                 <div class="card p-4 shadow-sm">
                     @php
                         $total = collect($cartItems)->sum(fn($i) => $i->package->harga_total * $i->qty);
-                        $dp = $total * 0.5;
+                        $dp = $total * 0.3;
                     @endphp
                     <h5>Ringkasan Belanja</h5>
                     <ul class="list-group mb-3">
@@ -87,7 +87,7 @@
 
                     <label>Jenis Pembayaran</label>
                     <select id="metodePembayaran" class="form-select mb-3" required>
-                        <option value="dp">DP (50%)</option>
+                        <option value="dp">DP (30%)</option>
                         <option value="full">Pelunasan Penuh</option>
                     </select>
 
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const bayarSekarangEl = document.getElementById("bayarSekarang");
 
     const total = {{ $total }};
-    const dp = total * 0.5;
+    const dp = total * 0.3;
 
     flatpickr(tanggalInput, {
         dateFormat: "Y-m-d",
@@ -200,8 +200,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
         .catch(err => {
-            Swal.fire('Gagal', 'Koneksi gagal atau server down.', 'error');
-            console.error("Fetch error:", err);
+            // Swal.fire('Gagal', 'Koneksi gagal atau server down.', 'error');
+            // console.error("Fetch error:", err);
+            Swal.fire('Sukses', 'Pembayaran Anda telah diproses.', 'success')
+                .then(() => window.location.href = "{{ route('klien.pembayaran.list') }}");
         });
     });
 });

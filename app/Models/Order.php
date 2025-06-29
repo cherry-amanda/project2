@@ -13,7 +13,7 @@ class Order extends Model
 
     protected $fillable = [
         'pengguna_id',
-        'id_package',
+        'package_id',
         'tanggal',
         'nama_pasangan',
         'no_ktp',
@@ -29,6 +29,6 @@ class Order extends Model
 
     public function package()
     {
-        return $this->belongsTo(Package::class, 'id_package');
+        return $this->belongsTo(Package::class, 'package_id');
     }
 }

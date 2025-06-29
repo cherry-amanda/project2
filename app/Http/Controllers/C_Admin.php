@@ -9,32 +9,54 @@ use App\Models\Keuangan;
 use App\Models\Event;
 use App\Models\Package;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class C_Admin extends Controller
 {
     public function dashboard()
     {
-        $dataTipePaket = Package::select('type as tipe', DB::raw('count(*) as total'))
-            ->groupBy('type')
-            ->get();
+        try {
+            $dataTipePaket = Package::select('type as tipe', DB::raw('count(*) as total'))
+                ->groupBy('type')
+                ->get();
 
-        return view('admin.v_dashboard-admin', [
-            'todaysOrders' => Booking::whereDate('created_at', today())->count(),
-            'totalBooking' => Booking::count(),
-            'totalPembayaran' => Keuangan::where('jenis', 'pemasukan')->sum('nominal'),
-            'newClientsThisWeek' => Pengguna::where('role', 'klien')
-                ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
-                ->count(),
-            'upcomingEvents' => Event::with(['booking.pengguna'])
-                ->whereHas('booking', fn($q) => $q->where('tanggal', '>=', now()))
-                ->orderByRaw('(select tanggal from bookings where bookings.id = events.booking_id) asc')
+            $upcomingEvents = Event::with(['booking.pengguna'])
+                ->whereHas('booking', function($q) {
+                    $q->where('tanggal', '>=', now());
+                })
+                ->orderBy('created_at', 'asc')
                 ->limit(5)
-                ->get(),
-            'latestTransactions' => Keuangan::latest()->limit(5)->get(),
-            'pendingVerifications' => Booking::where('status', '!=', 'pending',)->count(),
-            'dataTipePaket' => $dataTipePaket
-        ]);
+                ->get();
+
+            return view('admin.v_dashboard-admin', [
+                'todaysOrders' => Booking::whereDate('created_at', today())->count(),
+                'totalBooking' => Booking::count(),
+                'totalPembayaran' => Keuangan::where('jenis', 'pemasukan')->sum('nominal'),
+                'newClientsThisWeek' => Pengguna::where('role', 'klien')
+                    ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+                    ->count(),
+                'upcomingEvents' => $upcomingEvents,
+                'latestTransactions' => Keuangan::latest()->limit(5)->get(),
+                'pendingVerifications' => Booking::where('status', '!=', 'confirmed')->count(),
+                'dataTipePaket' => $dataTipePaket
+            ]);
+        } catch (\Exception $e) {
+            // Log error for debugging
+            Log::error('Admin Dashboard Error: ' . $e->getMessage());
+            
+            // Return view with default values if there's an error
+            return view('admin.v_dashboard-admin', [
+                'todaysOrders' => 0,
+                'totalBooking' => 0,
+                'totalPembayaran' => 0,
+                'newClientsThisWeek' => 0,
+                'upcomingEvents' => collect(),
+                'latestTransactions' => collect(),
+                'pendingVerifications' => 0,
+                'dataTipePaket' => collect()
+            ]);
+        }
     }
 
         

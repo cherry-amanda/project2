@@ -164,7 +164,11 @@ footer {
                         <div>
                             <strong class="text-dark">
                                 <i class="bi bi-calendar-event me-2 text-primary"></i>
-                                {{ \Carbon\Carbon::parse($event->booking->tanggal)->translatedFormat('l, d M Y') }}
+                                @if($event->booking && $event->booking->tanggal)
+                                    {{ \Carbon\Carbon::parse($event->booking->tanggal)->translatedFormat('l, d M Y') }}
+                                @else
+                                    Tanggal tidak tersedia
+                                @endif
                             </strong>
                             <div class="text-muted small mt-1">
                                 Klien: {{ $event->booking->pengguna->nama ?? '-' }}<br>
