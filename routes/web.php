@@ -23,6 +23,7 @@ use App\Http\Controllers\c_vendorServiceAdmin;
 use App\Http\Controllers\c_cart;
 use App\Http\Controllers\c_pesanan;
 use App\Http\Controllers\c_booking_assignment;
+use App\Http\Controllers\c_kelolavendor;
 
 
 
@@ -184,10 +185,10 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
 
     // ========== Kelola Vendor ==========
-    Route::get('vendor', [c_vendor::class, 'index'])->name('admin.vendor.index');
-    Route::get('vendor/detail/{id}', [c_vendor::class, 'show'])->name('admin.vendor.show');
-    Route::delete('vendor/delete/{id}', [c_vendor::class, 'destroy'])->name('admin.vendor.destroy');
-    Route::put('vendor/status/{id}', [c_vendor::class, 'toggleStatus'])->name('admin.vendor.toggleStatus');
+    Route::get('vendor', [c_kelolavendor::class, 'index'])->name('admin.vendor.index');
+    Route::get('vendor/detail/{id}', [c_kelolavendor::class, 'show'])->name('admin.vendor.show');
+    Route::delete('vendor/delete/{id}', [c_kelolavendor::class, 'destroy'])->name('admin.vendor.destroy');
+    Route::put('vendor/status/{id}', [c_kelolavendor::class, 'toggleStatus'])->name('admin.vendor.toggleStatus');
     Route::get('vendor/{vendor_id}/services', [c_vendorServiceAdmin::class, 'index'])->name('admin.vendor.services');
     Route::put('vendor/services/{id}/approve', [c_vendorServiceAdmin::class, 'approve'])->name('admin.vendor.services.approve');
     Route::put('vendor/services/{id}/reject', [c_vendorServiceAdmin::class, 'reject'])->name('admin.vendor.services.reject');

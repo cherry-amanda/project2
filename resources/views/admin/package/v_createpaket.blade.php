@@ -41,8 +41,8 @@
         </div>
 
         <div class="mb-3">
-            <label for="foto" class="form-label">Foto Paket (jpg, png, max 2MB)</label>
-            <input type="file" name="foto" id="foto" class="form-control" accept="image/*">
+            <label for="foto[]" class="form-label">Foto Paket (bisa pilih lebih dari satu)</label>
+            <input type="file" name="foto[]" id="foto" class="form-control" accept="image/*" multiple>
         </div>
 
         <!-- Untuk Tipe Paket (RAB) -->
@@ -54,7 +54,7 @@
                         <th>Nama Item (Vendor Service)</th>
                         <th>Harga Item</th>
                         <th>Deskripsi</th>
-                        <th>Action</th>
+                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -86,10 +86,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const jasaItemContainer = document.getElementById('jasaItemContainer');
     const rabTableBody = document.querySelector('#rabTable tbody');
     const addRabBtn = document.getElementById('addRabBtn');
-
     const vendorServices = @json($vendorServices);
 
-    function toggleRabSection() {
+    function toggleSections() {
         const selectedType = typeSelect.value;
         if (selectedType === 'paket') {
             rabContainer.style.display = 'block';
@@ -108,17 +107,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function addRabRow(selectedId = '', harga = '', deskripsi = '') {
         const row = document.createElement('tr');
-        let selectOptions = `<option value="">-- Pilih Item --</option>`;
+        let options = `<option value="">-- Pilih Item --</option>`;
         vendorServices.forEach(service => {
-            const selected = service.id == selectedId ? 'selected' : '';
-            selectOptions += `<option value="${service.id}" ${selected}>${service.nama_item} (${service.kategori})</option>`;
+            const selected = selectedId == service.id ? 'selected' : '';
+            options += `<option value="${service.id}" ${selected}>${service.nama_item} (${service.kategori})</option>`;
         });
 
         row.innerHTML = `
             <td>
-                <select name="packageRabs[vendor_service_id][]" class="form-select" required>
-                    ${selectOptions}
-                </select>
+                <select name="packageRabs[vendor_service_id][]" class="form-select" required>${options}</select>
             </td>
             <td>
                 <input type="number" name="packageRabs[harga_item][]" class="form-control" value="${harga}" min="0" required step="any">
@@ -130,28 +127,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 <button type="button" class="btn btn-danger btn-sm removeRabBtn">&times;</button>
             </td>
         `;
-
         rabTableBody.appendChild(row);
 
-        row.querySelector('.removeRabBtn').addEventListener('click', function () {
-            row.remove();
-        });
+        row.querySelector('.removeRabBtn').addEventListener('click', () => row.remove());
     }
 
-    typeSelect.addEventListener('change', toggleRabSection);
-    addRabBtn.addEventListener('click', function () {
-        addRabRow();
-    });
-
-    toggleRabSection();
+    typeSelect.addEventListener('change', toggleSections);
+    addRabBtn.addEventListener('click', () => addRabRow());
+    toggleSections();
 
     @if(old('type') == 'paket' && old('packageRabs.vendor_service_id'))
-        const oldVendorServiceIds = @json(old('packageRabs.vendor_service_id'));
-        const oldHargaItems = @json(old('packageRabs.harga_item'));
+        const oldIds = @json(old('packageRabs.vendor_service_id'));
+        const oldHarga = @json(old('packageRabs.harga_item'));
         const oldDeskripsi = @json(old('packageRabs.deskripsi'));
         rabTableBody.innerHTML = '';
-        oldVendorServiceIds.forEach((vsid, i) => {
-            addRabRow(vsid, oldHargaItems[i], oldDeskripsi[i]);
+        oldIds.forEach((id, i) => {
+            addRabRow(id, oldHarga[i], oldDeskripsi[i]);
         });
     @endif
 });

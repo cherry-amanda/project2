@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Midtrans\Snap;
 use Midtrans\Config;
+use Midtrans\Notification; // Import Midtrans Notification class
 use Illuminate\Support\Facades\Log;
 
 class c_payment extends Controller
@@ -104,6 +105,14 @@ class c_payment extends Controller
                 ],
             ];
 
+            // Add notification URL to the transaction details for Snap to send webhook
+            $params['callbacks'] = [
+                'finish' => route('klien.pembayaran.list'),
+                'error' => route('klien.pembayaran.list'),
+                'pending' => route('klien.pembayaran.list'),
+            ];
+
+
             Log::info('Midtrans Snap Params:', $params);
 
             $snapToken = Snap::getSnapToken($params);
@@ -145,41 +154,86 @@ class c_payment extends Controller
         ]);
     }
 
-    public function sukses(Request $request)
+    // This function will be called by Midtrans webhook
+    public function notification(Request $request)
     {
-        $order_id = session('order_id');
-        $payment = Payment::where('order_id', $order_id)->first();
+        Log::info('Midtrans Notification Received:', $request->all());
 
-        if ($payment && $payment->status !== 'berhasil') {
+        $notif = new Notification();
+
+        $transactionStatus = $notif->transaction_status;
+        $orderId = $notif->order_id;
+        $fraudStatus = $notif->fraud_status;
+
+        $payment = Payment::where('order_id', $orderId)->first();
+
+        if (!$payment) {
+            Log::warning('Payment not found for order_id: ' . $orderId);
+            return response()->json(['message' => 'Payment not found'], 404);
+        }
+
+        if ($payment->status === 'berhasil') {
+            Log::info('Payment for order_id ' . $orderId . ' is already successful. No update needed.');
+            return response()->json(['message' => 'Already successful'], 200);
+        }
+
+        if ($transactionStatus == 'capture') {
+            if ($fraudStatus == 'challenge') {
+                // TODO set payment status to 'challenge'
+                $payment->status = 'challenge';
+            } else if ($fraudStatus == 'accept') {
+                // TODO set payment status to 'success'
+                $payment->status = 'berhasil';
+                $payment->tanggal_bayar = now();
+            }
+        } else if ($transactionStatus == 'settlement') {
+            // TODO set payment status to 'success'
             $payment->status = 'berhasil';
             $payment->tanggal_bayar = now();
-            $payment->save();
+        } else if ($transactionStatus == 'pending') {
+            // TODO set payment status to 'pending'
+            $payment->status = 'pending';
+        } else if ($transactionStatus == 'deny') {
+            // TODO set payment status to 'deny'
+            $payment->status = 'gagal';
+        } else if ($transactionStatus == 'expire') {
+            // TODO set payment status to 'expire'
+            $payment->status = 'kadaluarsa';
+        } else if ($transactionStatus == 'cancel') {
+            // TODO set payment status to 'cancel'
+            $payment->status = 'dibatalkan';
+        }
 
-            $booking = $payment->booking;
+        $payment->save();
 
+        // Update booking status based on payment status
+        $booking = $payment->booking;
+        if ($payment->status === 'berhasil') {
             if ($payment->jenis === 'dp') {
+                // If DP is successful, delete existing pelunasan and create a new one if total_harga > paid amount
                 Payment::where('booking_id', $booking->id)
                     ->where('jenis', 'pelunasan')
                     ->delete();
 
-                $sisa = $booking->total_harga - $payment->jumlah;
-                if ($sisa > 0) {
-                    $order_id_pelunasan = 'ORDER-' . strtoupper(Str::random(10));
+                $totalPaidAmount = $booking->payments()->where('status', 'berhasil')->sum('jumlah');
+                $remainingAmount = $booking->total_harga - $totalPaidAmount;
 
+                if ($remainingAmount > 0) {
+                    $order_id_pelunasan = 'ORDER-' . strtoupper(Str::random(10));
                     $pelunasan = Payment::create([
                         'booking_id' => $booking->id,
                         'order_id' => $order_id_pelunasan,
-                        'jumlah' => $sisa,
+                        'jumlah' => $remainingAmount,
                         'status' => 'pending',
                         'jenis' => 'pelunasan',
-                        'metode' => 'transfer',
+                        'metode' => 'transfer', // Assuming pelunasan is also via transfer
                     ]);
 
                     try {
                         $snapTokenPelunasan = Snap::getSnapToken([
                             'transaction_details' => [
                                 'order_id' => $order_id_pelunasan,
-                                'gross_amount' => $sisa,
+                                'gross_amount' => $remainingAmount,
                             ],
                             'customer_details' => [
                                 'first_name' => $booking->nama_pasangan,
@@ -187,26 +241,48 @@ class c_payment extends Controller
                                 'phone' => $booking->pengguna->no_hp ?? '0811111111',
                             ]
                         ]);
-
                         $pelunasan->snap_token = $snapTokenPelunasan;
                         $pelunasan->save();
                     } catch (\Exception $e) {
-                        Log::error('Midtrans Pelunasan Error: ' . $e->getMessage());
+                        Log::error('Midtrans Pelunasan Snap Token Error: ' . $e->getMessage());
                     }
                 } else {
                     $booking->update(['status' => 'booked']);
                 }
-
             } elseif (in_array($payment->jenis, ['full', 'pelunasan'])) {
                 $booking->update(['status' => 'booked']);
             }
+        } elseif (in_array($payment->status, ['gagal', 'kadaluarsa', 'dibatalkan'])) {
+            // If payment fails, you might want to set booking status to something like 'failed' or 'cancelled'
+            // or just leave it as 'pending' for retry. For now, let's keep it 'pending' unless explicitly cancelled by user.
+            // $booking->update(['status' => 'cancelled']);
+        }
+
+        Log::info('Payment and Booking status updated for order_id: ' . $orderId);
+        return response()->json(['message' => 'Notification processed successfully'], 200);
+    }
+
+
+    public function sukses(Request $request)
+    {
+        // This function will still be used for redirect after user completes payment on Midtrans page.
+        // The actual status update should be handled by the notification endpoint for reliability.
+        $order_id = session('order_id');
+        $payment = Payment::where('order_id', $order_id)->first();
+
+        // If the notification has already processed, the status might already be 'berhasil'.
+        // This function primarily serves to redirect the user.
+        if ($payment && $payment->status !== 'berhasil') {
+            // We can add a small delay or check here to ensure the webhook has time to process,
+            // but relying on the webhook for status update is generally better.
+            // For now, we'll just redirect. The actual update should be from the notification endpoint.
         }
 
         $request->session()->forget('order_id');
 
         return redirect()->route('klien.pembayaran.list')->with([
             'status' => 'sukses',
-            'message' => 'Pembayaran berhasil!'
+            'message' => 'Pembayaran berhasil! Status akan diperbarui.'
         ]);
     }
 
@@ -215,7 +291,7 @@ class c_payment extends Controller
         $order_id = session('order_id');
         $payment = Payment::where('order_id', $order_id)->first();
         if ($payment) {
-            $payment->status = 'pending';
+            $payment->status = 'pending'; // Set to pending, but true status will come from webhook
             $payment->save();
         }
 

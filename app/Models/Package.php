@@ -30,5 +30,12 @@ class Package extends Model
         return $this->hasMany(PackageRab::class, 'package_id')->with('vendorService');
     }
 
+    // Tambahkan ini di model Package
+    public function photos()
+    {
+        return $this->hasMany(PackagePhoto::class, 'package_id');
+    }
+
+
 
 }

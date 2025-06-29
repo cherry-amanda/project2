@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Package;
 use App\Models\PackageRab;
 use App\Models\VendorService;
+use App\Models\PackagePhoto;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class c_package extends Controller
@@ -14,26 +16,20 @@ class c_package extends Controller
     {
         $type = $request->get('type');
 
-        $packages = Package::with(['packageRabs.vendorService.vendor']);
+        $packages = Package::with(['photos', 'packageRabs.vendorService.vendor']);
 
         if ($type) {
             $packages->where('type', $type);
         }
 
-        $packages = $packages->get();
-
-        return view('admin.package.v_kelolapaket', compact('packages'));
+        return view('admin.package.v_kelolapaket', ['packages' => $packages->get()]);
     }
-
-
 
     public function create()
     {
         $vendorServices = VendorService::with('vendor')->get();
         return view('admin.package.v_createpaket', compact('vendorServices'));
     }
-
-   
 
     public function store(Request $request)
     {
@@ -42,68 +38,70 @@ class c_package extends Controller
             'nama' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'harga_total' => 'required|numeric|min:0',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'foto.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'jasa_vendor_service_id' => 'nullable|exists:vendor_services,id',
             'packageRabs.vendor_service_id' => 'nullable|array',
             'packageRabs.harga_item' => 'nullable|array',
             'packageRabs.deskripsi' => 'nullable|array',
         ]);
 
-        // Proses upload foto
-        $fotoName = null;
-        if ($request->hasFile('foto')) {
-            $file = $request->file('foto');
-            $ext = $file->getClientOriginalExtension();
-            $fotoName = Str::uuid() . '.' . $ext;
-            $file->move(public_path('images/foto_paket'), $fotoName);
-        }
-
-        // Simpan data ke tabel packages
-        $package = Package::create([
-            'type' => $validated['type'],
-            'nama' => $validated['nama'],
-            'deskripsi' => $validated['deskripsi'],
-            'harga_total' => $validated['harga_total'],
-            'foto' => $fotoName,
-        ]);
-
-        // Jika tipe paket → simpan RAB
-        if ($validated['type'] === 'paket' && isset($validated['packageRabs']['vendor_service_id'])) {
-            $rabs = [];
-            foreach ($validated['packageRabs']['vendor_service_id'] as $i => $vendor_service_id) {
-                $rabs[] = [
-                    'package_id' => $package->id,
-                    'vendor_service_id' => $vendor_service_id,
-                    'harga_item' => $validated['packageRabs']['harga_item'][$i] ?? 0,
-                    'deskripsi' => $validated['packageRabs']['deskripsi'][$i] ?? null,
-                ];
-            }
-            \App\Models\PackageRab::insert($rabs);
-        }
-
-        // Jika tipe jasa → relasi satu item jasa
-        if ($validated['type'] === 'jasa' && $validated['jasa_vendor_service_id']) {
-            \App\Models\PackageRab::create([
-                'package_id' => $package->id,
-                'vendor_service_id' => $validated['jasa_vendor_service_id'],
-                'harga_item' => $validated['harga_total'],
-                'deskripsi' => 'Item jasa tunggal',
+        DB::beginTransaction();
+        try {
+            $package = Package::create([
+                'type' => $validated['type'],
+                'nama' => $validated['nama'],
+                'deskripsi' => $validated['deskripsi'],
+                'harga_total' => $validated['harga_total'],
             ]);
+
+            // Simpan banyak foto
+            if ($request->hasFile('foto')) {
+                foreach ($request->file('foto') as $file) {
+                    $filename = time() . '_' . Str::random(10) . '.' . $file->extension();
+                    $file->move(public_path('images/foto_paket'), $filename);
+                    $package->photos()->create(['fililename]);
+                }
+            }
+
+            // Simpan RAB
+            if ($validated['type'] === 'paket' && isset($validated['packageRabs']['vendor_service_id'])) {
+                foreach ($validated['packageRabs']['vendor_service_id'] as $i => $vs_id) {
+                    PackageRab::create([
+                        'package_id' => $package->id,
+                        'vendor_service_id' => $vs_id,
+                        'harga_item' => $validated['packageRabs']['harga_item'][$i] ?? 0,
+                        'deskripsi' => $validated['packageRabs']['deskripsi'][$i] ?? null,
+                    ]);
+                }
+            }
+
+            // Simpan jasa tunggal
+            if ($validated['type'] === 'jasa' && $validated['jasa_vendor_service_id']) {
+                PackageRab::create([
+                    'package_id' => $package->id,
+                    'vendor_service_id' => $validated['jasa_vendor_service_id'],
+                    'harga_item' => $validated['harga_total'],
+                    'deskripsi' => 'Item jasa tunggal',
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('admin.package.index')->with('success', 'Paket berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors('Gagal menyimpan paket: ' . $e->getMessage());
         }
-
-        return redirect()->route('admin.package.index')->with('success', 'Paket berhasil ditambahkan.');
     }
-
 
     public function show($id)
     {
-        $package = Package::with(['packageRabs.vendorService.vendor'])->findOrFail($id);
+        $package = Package::with(['photos', 'packageRabs.vendorService.vendor'])->findOrFail($id);
         return view('admin.package.v_detailpaket', compact('package'));
     }
 
     public function edit($id)
     {
-        $package = Package::with(['packageRabs.vendorService.vendor'])->findOrFail($id);
+        $package = Package::with(['photos', 'packageRabs.vendorService.vendor'])->findOrFail($id);
         $vendorServices = VendorService::with('vendor')->get();
         return view('admin.package.v_editpaket', compact('package', 'vendorServices'));
     }
@@ -112,69 +110,73 @@ class c_package extends Controller
     {
         $request->validate([
             'type' => 'required|in:paket,jasa',
-            'nama' => 'required|string',
-            'harga_total' => 'required|numeric',
+            'nama' => 'required|string|max:255',
+            'harga_total' => 'required|numeric|min:0',
             'deskripsi' => 'nullable|string',
+            'foto.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $package = Package::findOrFail($id);
+        $package = Package::with('photos')->findOrFail($id);
         $package->update($request->only(['type', 'nama', 'harga_total', 'deskripsi']));
 
-        // Hapus semua RAB lama, lalu simpan ulang
+        // Upload dan simpan tambahan foto baru
+        if ($request->hasFile('foto')) {
+            foreach ($request->file('foto') as $file) {
+                $filename = time() . '_' . Str::random(10) . '.' . $file->extension();
+                $file->move(public_path('images/foto_paket'), $filename);
+                $package->photos()->create(['filename' => $filename]);
+            }
+        }
+
+        // Update RAB
         if ($request->type == 'paket') {
-            // Hapus yang tidak ada di input
             $existingIds = collect($request->packageRabs['id'])->filter();
             PackageRab::where('package_id', $package->id)
                 ->whereNotIn('id', $existingIds)
                 ->delete();
 
-            if ($request->has('packageRabs')) {
-                foreach ($request->packageRabs['vendor_service_id'] as $i => $vendorServiceId) {
-                    $rabId = $request->packageRabs['id'][$i] ?? null;
-                    $dataRab = [
-                        'package_id' => $package->id,
-                        'vendor_service_id' => $vendorServiceId,
-                        'harga_item' => $request->packageRabs['harga_item'][$i],
-                        'deskripsi' => $request->packageRabs['deskripsi'][$i] ?? null,
-                    ];
+            foreach ($request->packageRabs['vendor_service_id'] as $i => $vs_id) {
+                $rabId = $request->packageRabs['id'][$i] ?? null;
+                $dataRab = [
+                    'package_id' => $package->id,
+                    'vendor_service_id' => $vs_id,
+                    'harga_item' => $request->packageRabs['harga_item'][$i],
+                    'deskripsi' => $request->packageRabs['deskripsi'][$i] ?? null,
+                ];
 
-                    if ($rabId) {
-                        // Update
-                        PackageRab::where('id', $rabId)->update($dataRab);
-                    } else {
-                        // Tambah baru
-                        PackageRab::create($dataRab);
-                    }
+                if ($rabId) {
+                    PackageRab::where('id', $rabId)->update($dataRab);
+                } else {
+                    PackageRab::create($dataRab);
                 }
             }
         } else {
-            // Kalau type == jasa, hapus semua RAB
             PackageRab::where('package_id', $package->id)->delete();
         }
 
         return redirect()->route('admin.package.index')->with('success', 'Paket berhasil diperbarui.');
     }
 
-
     public function destroy($id)
     {
-        $package = Package::findOrFail($id);
+        $package = Package::with('photos')->findOrFail($id);
+
+        // Hapus foto-fotonya
+        foreach ($package->photos as $photo) {
+            $filepath = public_path('images/foto_paket/' . $photo->filename);
+            if (file_exists($filepath)) {
+                unlink($filepath);
+            }
+            $photo->delete();
+        }
+
+        // Hapus RAB dan paket
         PackageRab::where('package_id', $package->id)->delete();
         $package->delete();
 
         return redirect()->route('admin.package.index')->with('success', 'Paket berhasil dihapus.');
     }
 
-    private function handleFotoUpload($fotoFile, $oldFoto = null)
-    {
-        if ($oldFoto && file_exists(public_path('images/foto_paket/' . $oldFoto))) {
-            unlink(public_path('images/foto_paket/' . $oldFoto));
-        }
-
-        $filename = time() . '_' . Str::random(10) . '.' . $fotoFile->extension();
-        $fotoFile->move(public_path('images/foto_paket'), $filename);
-        return $filename;
-    }
     public function vendorApprovedList()
     {
         $services = VendorService::with('vendor')
@@ -184,5 +186,4 @@ class c_package extends Controller
 
         return view('admin.package.v_vendorapproved', compact('services'));
     }
-
 }
