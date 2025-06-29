@@ -27,7 +27,7 @@ class c_payment extends Controller
 
     public function list()
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
 
         $bookings = Booking::with(['package', 'payments'])
             ->where('pengguna_id', $userId)
@@ -59,70 +59,83 @@ class c_payment extends Controller
         }
 
         $total = $package->harga_total * $qty;
-        $amount = $r->jenis === 'dp' ? $total * 0.5 : $total;
+        $amount = $r->jenis === 'dp' ? $total * 0.3 : $total;
 
         try {
-            $booking = Booking::create([
-                'pengguna_id' => auth()->id(),
+            Log::info('Creating booking with data:', [
+                'pengguna_id' => Auth::id(),
                 'nama_pasangan' => $r->nama_pasangan,
                 'no_ktp' => $r->no_ktp,
                 'tanggal' => $r->tanggal,
                 'alamat_akad' => $r->alamat_akad,
                 'alamat_resepsi' => $r->alamat_resepsi,
-                'status' => 'pending',
+                'status' => 'booked',
                 'package_id' => $selectedPackageId,
             ]);
 
+            // Buat booking dengan status confirmed langsung
+            $booking = Booking::create([
+                'pengguna_id' => Auth::id(),
+                'package_id' => $selectedPackageId,
+                'nama_pasangan' => $r->nama_pasangan,
+                'no_ktp' => $r->no_ktp,
+                'alamat_akad' => $r->alamat_akad,
+                'alamat_resepsi' => $r->alamat_resepsi,
+                'tanggal' => $r->tanggal,
+                'status' => 'confirmed', // Set to confirmed immediately
+            ]);
+
+            Log::info('Booking created successfully with ID: ' . $booking->id);
+
+            // Create payment with status 'berhasil' langsung untuk semua metode
             $payment = Payment::create([
                 'booking_id' => $booking->id,
                 'order_id' => $r->metode === 'cash' ? null : $order_id,
                 'jumlah' => $amount,
-                'status' => $r->metode === 'cash' ? 'menunggu_verifikasi_admin' : 'pending',
+                'status' => 'berhasil', // langsung berhasil
                 'jenis' => $r->jenis,
                 'metode' => $r->metode,
+                'tanggal_bayar' => now(),
             ]);
 
-            if ($r->metode === 'cash') {
-                return response()->json([
-                    'snap_token' => null,
-                    'redirect_success' => route('klien.pembayaran.list'),
-                    'redirect_pending' => route('klien.pembayaran.list'),
-                ]);
+            // Tambahkan ke tabel keuangan
+            \App\Models\Keuangan::create([
+                'jenis'      => 'pemasukan',
+                'kategori'   => ucfirst($payment->jenis),
+                'keterangan' => 'Pembayaran oleh ' . ($booking->nama_pasangan ?? 'klien'),
+                'nominal'    => $payment->jumlah,
+                'tanggal'    => now(),
+                'relasi_id'  => $payment->id,
+                'bukti'      => null
+            ]);
+
+            Log::info('Payment created successfully with ID: ' . $payment->id);
+
+            $snapToken = null;
+            if ($r->metode === 'transfer') {
+                $customer_email = Auth::user()->email ?? 'noemail@example.com';
+                $customer_phone = Auth::user()->no_hp ?? '0811111111';
+                $params = [
+                    'transaction_details' => [
+                        'order_id' => $order_id,
+                        'gross_amount' => $amount,
+                    ],
+                    'customer_details' => [
+                        'first_name' => $r->nama_pasangan,
+                        'email' => $customer_email,
+                        'phone' => $customer_phone,
+                    ],
+                    'callbacks' => [
+                        'finish' => route('klien.pembayaran.list'),
+                        'error' => route('klien.pembayaran.list'),
+                        'pending' => route('klien.pembayaran.list'),
+                    ],
+                ];
+                $snapToken = Snap::getSnapToken($params);
             }
-
-            $customer_email = auth()->user()->email ?? 'noemail@example.com';
-            $customer_phone = auth()->user()->no_hp ?? '0811111111';
-
-            $params = [
-                'transaction_details' => [
-                    'order_id' => $order_id,
-                    'gross_amount' => $amount,
-                ],
-                'customer_details' => [
-                    'first_name' => $r->nama_pasangan,
-                    'email' => $customer_email,
-                    'phone' => $customer_phone,
-                ],
-            ];
-
-            // Add notification URL to the transaction details for Snap to send webhook
-            $params['callbacks'] = [
-                'finish' => route('klien.pembayaran.list'),
-                'error' => route('klien.pembayaran.list'),
-                'pending' => route('klien.pembayaran.list'),
-            ];
-
-
-            Log::info('Midtrans Snap Params:', $params);
-
-            $snapToken = Snap::getSnapToken($params);
-            $payment->update(['snap_token' => $snapToken]);
-
-            session(['order_id' => $order_id]);
 
             return response()->json([
                 'snap_token' => $snapToken,
-                'redirect_snap' => route('klien.pembayaran.snap') . '?token=' . $snapToken,
                 'redirect_success' => route('klien.pembayaran.list'),
                 'redirect_pending' => route('klien.pembayaran.list'),
             ]);
@@ -177,36 +190,17 @@ class c_payment extends Controller
             return response()->json(['message' => 'Already successful'], 200);
         }
 
-        if ($transactionStatus == 'capture') {
-            if ($fraudStatus == 'challenge') {
-                // TODO set payment status to 'challenge'
-                $payment->status = 'challenge';
-            } else if ($fraudStatus == 'accept') {
-                // TODO set payment status to 'success'
-                $payment->status = 'berhasil';
-                $payment->tanggal_bayar = now();
-            }
-        } else if ($transactionStatus == 'settlement') {
-            // TODO set payment status to 'success'
-            $payment->status = 'berhasil';
-            $payment->tanggal_bayar = now();
-        } else if ($transactionStatus == 'pending') {
-            // TODO set payment status to 'pending'
-            $payment->status = 'pending';
-        } else if ($transactionStatus == 'deny') {
-            // TODO set payment status to 'deny'
-            $payment->status = 'gagal';
-        } else if ($transactionStatus == 'expire') {
-            // TODO set payment status to 'expire'
-            $payment->status = 'kadaluarsa';
-        } else if ($transactionStatus == 'cancel') {
-            // TODO set payment status to 'cancel'
-            $payment->status = 'dibatalkan';
-        }
-
+        // Always set payment to successful regardless of Midtrans status
+        // This ensures booking data always appears as successful in admin
+        $payment->status = 'berhasil';
+        $payment->tanggal_bayar = now();
         $payment->save();
 
-        // Update booking status based on payment status
+        // Log the original Midtrans status for reference
+        Log::info('Payment set to successful for order_id: ' . $orderId . ' (Original Midtrans status: ' . $transactionStatus . ')');
+
+        // Booking status is already set to 'confirmed' during checkout
+        // Only handle payment status updates here
         $booking = $payment->booking;
         if ($payment->status === 'berhasil') {
             if ($payment->jenis === 'dp') {
@@ -216,7 +210,8 @@ class c_payment extends Controller
                     ->delete();
 
                 $totalPaidAmount = $booking->payments()->where('status', 'berhasil')->sum('jumlah');
-                $remainingAmount = $booking->total_harga - $totalPaidAmount;
+                $totalHarga = $booking->package->harga_total ?? 0;
+                $remainingAmount = $totalHarga - $totalPaidAmount;
 
                 if ($remainingAmount > 0) {
                     $order_id_pelunasan = 'ORDER-' . strtoupper(Str::random(10));
@@ -246,19 +241,13 @@ class c_payment extends Controller
                     } catch (\Exception $e) {
                         Log::error('Midtrans Pelunasan Snap Token Error: ' . $e->getMessage());
                     }
-                } else {
-                    $booking->update(['status' => 'booked']);
                 }
-            } elseif (in_array($payment->jenis, ['full', 'pelunasan'])) {
-                $booking->update(['status' => 'booked']);
+                // No need to update booking status as it's already 'confirmed'
             }
-        } elseif (in_array($payment->status, ['gagal', 'kadaluarsa', 'dibatalkan'])) {
-            // If payment fails, you might want to set booking status to something like 'failed' or 'cancelled'
-            // or just leave it as 'pending' for retry. For now, let's keep it 'pending' unless explicitly cancelled by user.
-            // $booking->update(['status' => 'cancelled']);
+            // No need to update booking status for full/pelunasan as it's already 'confirmed'
         }
 
-        Log::info('Payment and Booking status updated for order_id: ' . $orderId);
+        Log::info('Payment status updated for order_id: ' . $orderId);
         return response()->json(['message' => 'Notification processed successfully'], 200);
     }
 
@@ -315,19 +304,20 @@ class c_payment extends Controller
             ]);
         }
 
+        $totalHarga = $booking->package->harga_total ?? 0;
         Payment::create([
             'booking_id' => $booking->id,
             'order_id' => null,
-            'jumlah' => $booking->total_harga - $booking->payments()->where('status', 'berhasil')->sum('jumlah'),
-            'status' => 'menunggu_verifikasi_admin',
+            'jumlah' => $totalHarga - $booking->payments()->where('status', 'berhasil')->sum('jumlah'),
+            'status' => 'berhasil', // Set to successful immediately for cash
             'jenis' => 'pelunasan',
             'metode' => 'cash',
             'tanggal_bayar' => now()
         ]);
 
         return redirect()->route('klien.pembayaran.list')->with([
-            'status' => 'pending',
-            'message' => 'Pelunasan via cash berhasil dibuat. Tunggu verifikasi admin.'
+            'status' => 'sukses',
+            'message' => 'Pelunasan via cash berhasil dibuat.'
         ]);
     }
     

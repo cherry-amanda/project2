@@ -65,7 +65,9 @@ Route::middleware('auth')->group(function () {
 
 
 Route::get('/', function () {
-    return view('landingpage');
+    return view('landingpage', [
+        'packages' => \App\Models\Package::all()
+    ]);
 })->name('landing');
 
 Route::get('/galeri', function () {

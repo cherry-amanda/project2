@@ -14,6 +14,89 @@
 
   <!-- AOS Animate on Scroll -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css">
+
+  <style>
+    .slider .slick-slide > div {
+        display: flex;
+        justify-content: center;
+    }
+    .package-card {
+        width: 220px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        padding: 16px 12px 18px 12px;
+        margin: 0 auto;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .package-card img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    .package-card h3 {
+        font-size: 1.05rem;
+        margin: 0.5rem 0 0.2rem 0;
+        font-weight: bold;
+        color: #222;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .package-card p {
+        font-size: 0.92rem;
+        min-height: 36px;
+        color: #555;
+        margin-bottom: 0.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .package-card h4 {
+        color: #2ecc71;
+        font-size: 1.08rem;
+        margin: 0.5rem 0 0 0;
+        font-weight: bold;
+    }
+    .testimoni-slider .slick-slide > div {
+      display: flex;
+      justify-content: center;
+    }
+    .testimoni-card {
+      width: 320px;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      padding: 22px 18px 18px 18px;
+      margin: 0 auto;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .testimoni-card h3 {
+      font-size: 1.08rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: #111;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .testimoni-card p {
+      font-size: 1.01rem;
+      color: #444;
+      margin-bottom: 0;
+      min-height: 48px;
+      line-height: 1.4;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
 </head>
 <body>
 
@@ -86,24 +169,19 @@
   <!-- Produk -->
   <section id="produk" class="wrapper">
     <div class="inner">
-      <h1 class="headproduk">Produk Kami</h1>
+      <h1 class="headproduk">Paket Pernikahan Kami</h1>
       <div class="lineproduk"></div>
       <div class="slider">
-        <div data-aos="fade-up">
-          <img src="{{ asset('images/foto3.jpeg') }}" alt="">
-          <h3>Paket hemat</h3>
-          <p>Pernikahan dengan budget yang minim, namun terlihat istimewa</p>
+        @foreach($packages as $package)
+        <div>
+          <div class="package-card" data-aos="fade-up">
+            <img src="{{ asset('images/foto_paket/' . ($package->foto ?? 'default.jpg')) }}" alt="{{ $package->nama }}">
+            <h3 title="{{ $package->nama }}">{{ $package->nama }}</h3>
+            <p title="{{ $package->deskripsi }}">{{ Str::limit($package->deskripsi, 40) }}</p>
+            <h4>Rp {{ number_format($package->harga_total, 0, ',', '.') }}</h4>
+          </div>
         </div>
-        <div data-aos="fade-up">
-          <img src="{{ asset('images/foto4.jpeg') }}" alt="">
-          <h3>Paket meriah</h3>
-          <p>Meriahkan pernikahan dengan suasana yang seru</p>
-        </div>
-        <div data-aos="fade-up">
-          <img src="{{ asset('images/foto5.jpeg') }}" alt="">
-          <h3>Paket megah</h3>
-          <p>Pernikahan adalah suatu moment yang tak terlupakan dan harus dilakukan dengan megah</p>
-        </div>
+        @endforeach
       </div>
     </div>
   </section>
@@ -113,23 +191,23 @@
     <div class="inner">
       <h1 class="headproduk">Testimoni</h1>
       <div class="lineproduk"></div>
-      <div class="slider">
-        <div data-aos="fade-up">
-          <div class="komentar">
+      <div class="testimoni-slider">
+        <div>
+          <div class="testimoni-card" data-aos="fade-up">
             <h3>@alwi</h3>
-            <p class="text-testimoni">Pernikahan saya jadi salah satu moment paling sempurna di hidup saya</p>
+            <p>Pernikahan saya jadi salah satu moment paling sempurna di hidup saya</p>
           </div>
         </div>
-        <div data-aos="fade-up">
-          <div class="komentar">
+        <div>
+          <div class="testimoni-card" data-aos="fade-up">
             <h3>@mikal</h3>
-            <p class="text-testimoni">Pernikahan saya berjalan dengan sangat lancar.</p>
+            <p>Pernikahan saya berjalan dengan sangat lancar.</p>
           </div>
         </div>
-        <div data-aos="fade-up">
-          <div class="komentar">
+        <div>
+          <div class="testimoni-card" data-aos="fade-up">
             <h3>@cherry</h3>
-            <p class="text-testimoni">Pernikahan saya sangat meriah dan megah, saya sangat suka</p>
+            <p>Pernikahan saya sangat meriah dan megah, saya sangat suka</p>
           </div>
         </div>
       </div>
@@ -167,10 +245,27 @@
     AOS.init({ duration: 1000, once: true });
     $(document).ready(function(){
       $('.slider').slick({
+        slidesToShow: 3,
+        slidesToScroll: 1,
         autoplay: true,
         autoplaySpeed: 3000,
         arrows: true,
-        dots: true
+        dots: true,
+        responsive: [
+          { breakpoint: 992, settings: { slidesToShow: 2 } },
+          { breakpoint: 600, settings: { slidesToShow: 1 } }
+        ]
+      });
+      $('.testimoni-slider').slick({
+        slidesToShow: 2,
+        slidesToScroll: 1,
+        autoplay: true,
+        autoplaySpeed: 3500,
+        arrows: false,
+        dots: true,
+        responsive: [
+          { breakpoint: 900, settings: { slidesToShow: 1 } }
+        ]
       });
     });
   </script>

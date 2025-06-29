@@ -66,6 +66,7 @@ class c_pesanan extends Controller
             'bukti' => null
         ]);
 
+        // Booking status is already 'booked' from checkout, no need to update
         return back()->with('success', 'Pembayaran berhasil dikonfirmasi dan dicatat di keuangan.');
     }
     public function show($id)
