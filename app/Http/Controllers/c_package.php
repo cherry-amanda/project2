@@ -15,7 +15,6 @@ class c_package extends Controller
     public function index(Request $request)
     {
         $type = $request->get('type');
-
         $packages = Package::with(['photos', 'packageRabs.vendorService.vendor']);
 
         if ($type) {
@@ -59,7 +58,7 @@ class c_package extends Controller
                 foreach ($request->file('foto') as $file) {
                     $filename = time() . '_' . Str::random(10) . '.' . $file->extension();
                     $file->move(public_path('images/foto_paket'), $filename);
-                    $package->photos()->create(['fililename]);
+                    $package->photos()->create(['filename' => $filename]); // ✅ fix: 'filename', bukan 'fililename'
                 }
             }
 
@@ -119,7 +118,7 @@ class c_package extends Controller
         $package = Package::with('photos')->findOrFail($id);
         $package->update($request->only(['type', 'nama', 'harga_total', 'deskripsi']));
 
-        // Upload dan simpan tambahan foto baru
+        // Upload tambahan foto baru
         if ($request->hasFile('foto')) {
             foreach ($request->file('foto') as $file) {
                 $filename = time() . '_' . Str::random(10) . '.' . $file->extension();
@@ -129,7 +128,7 @@ class c_package extends Controller
         }
 
         // Update RAB
-        if ($request->type == 'paket') {
+        if ($request->type === 'paket') {
             $existingIds = collect($request->packageRabs['id'])->filter();
             PackageRab::where('package_id', $package->id)
                 ->whereNotIn('id', $existingIds)
@@ -161,7 +160,6 @@ class c_package extends Controller
     {
         $package = Package::with('photos')->findOrFail($id);
 
-        // Hapus foto-fotonya
         foreach ($package->photos as $photo) {
             $filepath = public_path('images/foto_paket/' . $photo->filename);
             if (file_exists($filepath)) {
@@ -170,7 +168,6 @@ class c_package extends Controller
             $photo->delete();
         }
 
-        // Hapus RAB dan paket
         PackageRab::where('package_id', $package->id)->delete();
         $package->delete();
 
