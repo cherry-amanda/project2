@@ -42,6 +42,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Item</th>
+                                <th>Kategori</th>
                                 <th>Harga</th>
                                 <th>Deskripsi</th>
                             </tr>
@@ -50,6 +51,7 @@
                             @foreach($package->packageRabs as $rab)
                             <tr>
                                 <td>{{ $rab->vendorService->nama_item ?? '-' }}</td>
+                                <td>{{ $rab->category->nama_kategori ?? '-' }}</td>
                                 <td>Rp {{ number_format($rab->harga_item, 0, ',', '.') }}</td>
                                 <td>{{ $rab->deskripsi }}</td>
                             </tr>

@@ -50,13 +50,14 @@
         </div>
         @endif
 
-        {{-- RAB SECTION --}}
+        {{-- RAB --}}
         <div id="rab-section" style="{{ $package->type == 'paket' ? '' : 'display:none' }}">
             <h5>Detail RAB</h5>
             <table class="table table-bordered" id="rabTable">
                 <thead>
                     <tr>
                         <th>Item Vendor</th>
+                        <th>Kategori</th>
                         <th>Harga</th>
                         <th>Deskripsi</th>
                         <th>Aksi</th>
@@ -70,9 +71,19 @@
                             <select name="packageRabs[vendor_service_id][]" class="form-select" required>
                                 <option value="">-- Pilih Item --</option>
                                 @foreach($vendorServices as $service)
-                                    <option value="{{ $service->id }}" {{ $rab->vendor_service_id == $service->id ? 'selected' : '' }}>
-                                        {{ $service->nama_item }} ({{ $service->vendor->kategori ?? '-' }}) - {{ $service->nama_jasa ?? '-' }}
-                                    </option>
+                                <option value="{{ $service->id }}" {{ $rab->vendor_service_id == $service->id ? 'selected' : '' }}>
+                                    {{ $service->nama_item }} ({{ $service->vendor->kategori ?? '-' }}) - {{ $service->nama_jasa ?? '-' }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </td>
+                        <td>
+                            <select name="packageRabs[category_id][]" class="form-select">
+                                <option value="">-- Pilih Kategori --</option>
+                                @foreach($rabCategories as $cat)
+                                <option value="{{ $cat->id }}" {{ $rab->category_id == $cat->id ? 'selected' : '' }}>
+                                    {{ $cat->nama_kategori }}
+                                </option>
                                 @endforeach
                             </select>
                         </td>
@@ -92,7 +103,6 @@
             <button type="button" class="btn btn-secondary btn-sm" id="addRabBtn">+ Tambah Item</button>
         </div>
 
-        {{-- Tombol --}}
         <div class="mt-4">
             <button type="submit" class="btn btn-success">Simpan Perubahan</button>
             <a href="{{ route('admin.package.index') }}" class="btn btn-secondary">Batal</a>
@@ -103,60 +113,66 @@
 
 @section('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const typeSelect = document.getElementById('type');
-        const rabSection = document.getElementById('rab-section');
-        const rabTableBody = document.querySelector('#rabTable tbody');
-        const addRabBtn = document.getElementById('addRabBtn');
+document.addEventListener('DOMContentLoaded', function () {
+    const typeSelect = document.getElementById('type');
+    const rabSection = document.getElementById('rab-section');
+    const rabTableBody = document.querySelector('#rabTable tbody');
+    const addRabBtn = document.getElementById('addRabBtn');
+    const vendorServices = @json($vendorServices);
+    const rabCategories = @json($rabCategories);
 
-        const vendorServices = @json($vendorServices);
+    function toggleRabSection() {
+        rabSection.style.display = typeSelect.value === 'paket' ? '' : 'none';
+    }
 
-        function toggleRabSection() {
-            rabSection.style.display = typeSelect.value === 'paket' ? '' : 'none';
-        }
+    function addRabRow(selectedId = '', categoryId = '', harga = '', deskripsi = '') {
+        let row = document.createElement('tr');
 
-        function addRabRow(selectedId = '', harga = '', deskripsi = '') {
-            let row = document.createElement('tr');
-            let options = `<option value="">-- Pilih Item --</option>`;
-            vendorServices.forEach(service => {
-                const selected = selectedId == service.id ? 'selected' : '';
-                options += `<option value="${service.id}" ${selected}>${service.nama_item} (${service.vendor?.kategori ?? '-'})</option>`;
-            });
-
-            row.innerHTML = `
-                <td>
-                    <input type="hidden" name="packageRabs[id][]" value="">
-                    <select name="packageRabs[vendor_service_id][]" class="form-select">${options}</select>
-                </td>
-                <td>
-                    <input type="number" name="packageRabs[harga_item][]" class="form-control" value="${harga}" min="0">
-                </td>
-                <td>
-                    <input type="text" name="packageRabs[deskripsi][]" class="form-control" value="${deskripsi}">
-                </td>
-                <td>
-                    <button type="button" class="btn btn-danger btn-sm removeRabBtn">&times;</button>
-                </td>
-            `;
-
-            rabTableBody.appendChild(row);
-
-            row.querySelector('.removeRabBtn').addEventListener('click', () => row.remove());
-        }
-
-        addRabBtn.addEventListener('click', () => addRabRow());
-        typeSelect.addEventListener('change', toggleRabSection);
-        document.querySelectorAll('.removeRabBtn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                this.closest('tr').remove();
-            });
+        let options = `<option value="">-- Pilih Item --</option>`;
+        vendorServices.forEach(service => {
+            const selected = selectedId == service.id ? 'selected' : '';
+            options += `<option value="${service.id}" ${selected}>${service.nama_item} (${service.vendor?.kategori ?? '-'})</option>`;
         });
 
-        toggleRabSection();
+        let kategoriOptions = `<option value="">-- Pilih Kategori --</option>`;
+        rabCategories.forEach(cat => {
+            const selected = categoryId == cat.id ? 'selected' : '';
+            kategoriOptions += `<option value="${cat.id}" ${selected}>${cat.nama_kategori}</option>`;
+        });
+
+        row.innerHTML = `
+            <td>
+                <input type="hidden" name="packageRabs[id][]" value="">
+                <select name="packageRabs[vendor_service_id][]" class="form-select">${options}</select>
+            </td>
+            <td>
+                <select name="packageRabs[category_id][]" class="form-select">${kategoriOptions}</select>
+            </td>
+            <td>
+                <input type="number" name="packageRabs[harga_item][]" class="form-control" value="${harga}" min="0">
+            </td>
+            <td>
+                <input type="text" name="packageRabs[deskripsi][]" class="form-control" value="${deskripsi}">
+            </td>
+            <td>
+                <button type="button" class="btn btn-danger btn-sm removeRabBtn">&times;</button>
+            </td>
+        `;
+        rabTableBody.appendChild(row);
+        row.querySelector('.removeRabBtn').addEventListener('click', () => row.remove());
+    }
+
+    addRabBtn.addEventListener('click', () => addRabRow());
+    typeSelect.addEventListener('change', toggleRabSection);
+    document.querySelectorAll('.removeRabBtn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            this.closest('tr').remove();
+        });
     });
+
+    toggleRabSection();
+});
 </script>
-
-
 
 <style>
 .form-label { font-weight: 600; }

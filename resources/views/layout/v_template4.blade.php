@@ -10,7 +10,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
   <script src="{{asset('template')}}/assets/js/material-dashboard.min.js?v=3.2.0"></script>
-@stack('scripts')
+@stack('scripts') 
 </body>
 
 

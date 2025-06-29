@@ -54,6 +54,7 @@
                         <th>Nama Item (Vendor Service)</th>
                         <th>Harga Item</th>
                         <th>Deskripsi</th>
+                        <th>Kategori</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -87,6 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const rabTableBody = document.querySelector('#rabTable tbody');
     const addRabBtn = document.getElementById('addRabBtn');
     const vendorServices = @json($vendorServices);
+    const rabCategories = @json($rabCategories);
 
     function toggleSections() {
         const selectedType = typeSelect.value;
@@ -105,23 +107,33 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function addRabRow(selectedId = '', harga = '', deskripsi = '') {
+    function addRabRow(selectedId = '', harga = '', deskripsi = '', selectedCategoryId = '') {
         const row = document.createElement('tr');
-        let options = `<option value="">-- Pilih Item --</option>`;
+
+        let serviceOptions = `<option value="">-- Pilih Item --</option>`;
         vendorServices.forEach(service => {
             const selected = selectedId == service.id ? 'selected' : '';
-            options += `<option value="${service.id}" ${selected}>${service.nama_item} (${service.kategori})</option>`;
+            serviceOptions += `<option value="${service.id}" ${selected}>${service.nama_item} (${service.kategori})</option>`;
+        });
+
+        let categoryOptions = `<option value="">-- Pilih Kategori --</option>`;
+        rabCategories.forEach(cat => {
+            const selected = selectedCategoryId == cat.id ? 'selected' : '';
+            categoryOptions += `<option value="${cat.id}" ${selected}>${cat.nama_kategori}</option>`;
         });
 
         row.innerHTML = `
             <td>
-                <select name="packageRabs[vendor_service_id][]" class="form-select" required>${options}</select>
+                <select name="packageRabs[vendor_service_id][]" class="form-select" required>${serviceOptions}</select>
             </td>
             <td>
                 <input type="number" name="packageRabs[harga_item][]" class="form-control" value="${harga}" min="0" required step="any">
             </td>
             <td>
                 <input type="text" name="packageRabs[deskripsi][]" class="form-control" value="${deskripsi}" placeholder="Deskripsi item...">
+            </td>
+            <td>
+                <select name="packageRabs[category_id][]" class="form-select" required>${categoryOptions}</select>
             </td>
             <td>
                 <button type="button" class="btn btn-danger btn-sm removeRabBtn">&times;</button>
@@ -140,9 +152,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const oldIds = @json(old('packageRabs.vendor_service_id'));
         const oldHarga = @json(old('packageRabs.harga_item'));
         const oldDeskripsi = @json(old('packageRabs.deskripsi'));
+        const oldCategoryIds = @json(old('packageRabs.category_id'));
         rabTableBody.innerHTML = '';
         oldIds.forEach((id, i) => {
-            addRabRow(id, oldHarga[i], oldDeskripsi[i]);
+            addRabRow(id, oldHarga[i], oldDeskripsi[i], oldCategoryIds[i]);
         });
     @endif
 });
