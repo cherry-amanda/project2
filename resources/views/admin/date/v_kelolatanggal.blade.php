@@ -89,6 +89,19 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         },
         @endforeach
+        @foreach ($bookings as $b)
+        {
+            title: 'Booked',
+            start: '{{ $b->tanggal }}',
+            status: 'booked',
+            color: 'rgba(220, 53, 69, 0.4)',
+            textColor: '#000',
+            extendedProps: {
+                note: '{{ $b->nama_pasangan ?? 'Tidak diketahui' }}'
+            }
+        },
+        @endforeach
+
     ];
 
     let calendarEl = document.getElementById('calendar');

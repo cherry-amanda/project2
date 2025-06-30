@@ -12,7 +12,10 @@ class c_date extends Controller
     public function index()
     {
         $dates = Date::all();
-        $bookings = Booking::all();
+        $bookings = Booking::whereDate('tanggal', '>=', now())
+                   ->whereIn('status', ['booked', 'pending', 'confirmed'])
+                   ->get();
+
 
         return view('admin.date.v_kelolatanggal', compact('dates', 'bookings'));
     }
