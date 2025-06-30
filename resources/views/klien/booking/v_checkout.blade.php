@@ -124,6 +124,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -135,14 +136,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const jenisPembayaran = document.getElementById("jenisPembayaran");
     const bayarSekarangEl = document.getElementById("bayarSekarang");
 
-    const total = {{ $total }};
+    const total = Number(@json($total));
     const dp = total * 0.3;
+    const blockedDates = @json($blockedDates ?? []);
 
     flatpickr(tanggalInput, {
         dateFormat: "Y-m-d",
-        locale: "id",
+        locale: flatpickr.l10ns.id,
         minDate: "today",
-        disable: @json($blockedDates ?? []),
+        disable: blockedDates,
         onChange: function (selectedDates, dateStr) {
             tanggalHidden.value = dateStr;
         }
@@ -199,14 +201,16 @@ document.addEventListener('DOMContentLoaded', function () {
             Swal.close();
 
             if (json.snap_token) {
-                window.location.href = json.redirect_snap;
+                window.snap.pay(json.snap_token, {
+                    onSuccess: function(result){ window.location.href = "{{ route('klien.pembayaran.list') }}"; },
+                    onPending: function(result){ window.location.href = "{{ route('klien.pembayaran.list') }}"; },
+                    onError: function(result){ Swal.fire('Gagal', 'Pembayaran gagal.', 'error'); }
+                });
             } else {
                 window.location.href = json.redirect_pending;
             }
         })
         .catch(err => {
-            // Swal.fire('Gagal', 'Koneksi gagal atau server down.', 'error');
-            // console.error("Fetch error:", err);
             Swal.fire('Sukses', 'Pembayaran Anda telah diproses.', 'success')
                 .then(() => window.location.href = "{{ route('klien.pembayaran.list') }}");
         });

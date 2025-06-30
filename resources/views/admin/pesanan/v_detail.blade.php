@@ -16,7 +16,9 @@
             </div>
 
             <div class="row mb-2">
-                <div class="col-md-6"><strong>Tanggal Bayar:</strong> {{ $payment->tanggal_bayar ?? '-' }}</div>
+                <div class="col-md-6"><strong>Tanggal Bayar:</strong> 
+                    {{ $payment->tanggal_bayar ? \Carbon\Carbon::parse($payment->tanggal_bayar)->setTimezone('Asia/Jakarta')->translatedFormat('d F Y H:i') : '-' }}
+                </div>
                 <div class="col-md-6">
                     <strong>Jenis:</strong>
                     <span class="badge bg-secondary"><i class="bi bi-cash-coin me-1"></i>{{ ucfirst($payment->jenis) }}</span>

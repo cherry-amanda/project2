@@ -31,6 +31,12 @@ class c_pesanan extends Controller
         $payment->status = 'berhasil';
         $payment->save();
 
+        // Update status booking menjadi confirmed jika belum
+        if ($payment->booking && $payment->booking->status !== 'confirmed') {
+            $payment->booking->status = 'confirmed';
+            $payment->booking->save();
+        }
+
         Keuangan::create([
             'jenis' => 'pemasukan',
             'kategori' => 'Pembayaran Klien',
@@ -54,6 +60,12 @@ class c_pesanan extends Controller
         $payment->status = 'berhasil';
         $payment->tanggal_bayar = now();
         $payment->save();
+
+        // Update status booking menjadi confirmed jika belum
+        if ($payment->booking && $payment->booking->status !== 'confirmed') {
+            $payment->booking->status = 'confirmed';
+            $payment->booking->save();
+        }
 
         // Masukkan ke tabel keuangan
         \App\Models\Keuangan::create([

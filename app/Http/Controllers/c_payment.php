@@ -73,7 +73,7 @@ class c_payment extends Controller
                 'package_id' => $selectedPackageId,
             ]);
 
-            // Buat booking dengan status confirmed langsung
+            // Buat booking dengan status sesuai metode
             $booking = Booking::create([
                 'pengguna_id' => Auth::id(),
                 'package_id' => $selectedPackageId,
@@ -82,17 +82,17 @@ class c_payment extends Controller
                 'alamat_akad' => $r->alamat_akad,
                 'alamat_resepsi' => $r->alamat_resepsi,
                 'tanggal' => $r->tanggal,
-                'status' => 'confirmed', // Set to confirmed immediately
+                'status' => $r->metode === 'cash' ? 'pending' : 'confirmed', // cash = pending, transfer = confirmed
             ]);
 
             Log::info('Booking created successfully with ID: ' . $booking->id);
 
-            // Create payment with status 'berhasil' langsung untuk semua metode
+            // Create payment dengan status sesuai metode
             $payment = Payment::create([
                 'booking_id' => $booking->id,
                 'order_id' => $r->metode === 'cash' ? null : $order_id,
                 'jumlah' => $amount,
-                'status' => 'berhasil', // langsung berhasil
+                'status' => $r->metode === 'cash' ? 'pending' : 'berhasil', // cash = pending, transfer = berhasil
                 'jenis' => $r->jenis,
                 'metode' => $r->metode,
                 'tanggal_bayar' => now(),
@@ -112,6 +112,7 @@ class c_payment extends Controller
             Log::info('Payment created successfully with ID: ' . $payment->id);
 
             $snapToken = null;
+            $redirectSnap = null;
             if ($r->metode === 'transfer') {
                 $customer_email = Auth::user()->email ?? 'noemail@example.com';
                 $customer_phone = Auth::user()->no_hp ?? '0811111111';
@@ -132,11 +133,12 @@ class c_payment extends Controller
                     ],
                 ];
                 $snapToken = Snap::getSnapToken($params);
+                $redirectSnap = 'https://app.midtrans.com/snap/v2/vtweb/' . $snapToken;
             }
 
             return response()->json([
                 'snap_token' => $snapToken,
-                'redirect_success' => route('klien.pembayaran.list'),
+                'redirect_snap' => $redirectSnap,
                 'redirect_pending' => route('klien.pembayaran.list'),
             ]);
 
