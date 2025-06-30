@@ -32,4 +32,8 @@ class PackageRab extends Model
     {
         return $this->vendorService ? $this->vendorService->nama_item : null;
     }
+      public function category()
+    {
+        return $this->belongsTo(RabCategory::class, 'category_id');
+    }
 }

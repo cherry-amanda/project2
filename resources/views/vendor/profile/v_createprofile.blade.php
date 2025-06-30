@@ -12,8 +12,12 @@
             <select name="kategori" class="form-control @error('kategori') is-invalid @enderror" required>
                 <option value="">-- Pilih Kategori --</option>
                 <option value="Dekorasi" {{ old('kategori') == 'Dekorasi' ? 'selected' : '' }}>Dekorasi</option>
-                <option value="Katering" {{ old('kategori') == 'Katering' ? 'selected' : '' }}>Katering</option>
-                <option value="Fotografi" {{ old('kategori') == 'Fotografi' ? 'selected' : '' }}>Fotografi</option>
+                <option value="Catering" {{ old('kategori') == 'Catering' ? 'selected' : '' }}>Catering</option>
+                <option value="Galura & Upacara Adat" {{ old('kategori') == 'Galura & Upacara Adat' ? 'selected' : '' }}>Galura & Upacara Adat</option>
+                <option value="Box Seserahan" {{ old('kategori') == 'Box Seserahan' ? 'selected' : '' }}>Box Seserahan</option>
+                <option value="Dokumentasi" {{ old('kategori') == 'Dokumentasi' ? 'selected' : '' }}>Dokumentasi</option>
+                <option value="Music Entertainment" {{ old('kategori') == 'Music Entertainment' ? 'selected' : '' }}>Music Entertainment</option>
+                <option value="Makeup & Attire" {{ old('kategori') == 'Makeup & Attire' ? 'selected' : '' }}>Makeup & Attire</option>
                 <!-- Tambah kategori lain sesuai kebutuhan -->
             </select>
             @error('kategori')
