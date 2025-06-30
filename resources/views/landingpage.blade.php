@@ -175,7 +175,12 @@
         @foreach($packages as $package)
         <div>
           <div class="package-card" data-aos="fade-up">
-            <img src="{{ asset('images/foto_paket/' . ($package->foto ?? 'default.jpg')) }}" alt="{{ $package->nama }}">
+            @php
+              $firstPhoto = $package->photos->first();
+              $photoPath = $firstPhoto ? asset('images/foto_paket/' . $firstPhoto->filename) : asset('images/default.jpg');
+            @endphp
+            <img src="{{ $photoPath }}" alt="{{ $package->nama }}">
+
             <h3 title="{{ $package->nama }}">{{ $package->nama }}</h3>
             <p title="{{ $package->deskripsi }}">{{ Str::limit($package->deskripsi, 40) }}</p>
             <h4>Rp {{ number_format($package->harga_total, 0, ',', '.') }}</h4>

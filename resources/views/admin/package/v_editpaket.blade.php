@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container py-4">
-    <h4 class="mb-3">Edit Paket</h4>
+    <h4 class="mb-4">Edit Paket</h4>
 
     <form action="{{ route('admin.package.update', $package->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
@@ -33,16 +33,16 @@
         </div>
 
         <div class="mb-3">
-            <label for="foto[]" class="form-label">Upload Foto Baru (bisa lebih dari 1)</label>
+            <label for="foto[]" class="form-label">Upload Foto Baru</label>
             <input type="file" name="foto[]" class="form-control" accept="image/*" multiple>
         </div>
 
         @if($package->photos->count())
-        <div class="mb-3">
-            <label class="form-label">Foto Sekarang:</label>
+        <div class="mb-4">
+            <label class="form-label">Foto Saat Ini:</label>
             <div class="row">
                 @foreach($package->photos as $photo)
-                <div class="col-md-3 mb-2 position-relative">
+                <div class="col-md-3 mb-2">
                     <img src="{{ asset('images/foto_paket/' . $photo->filename) }}" class="img-thumbnail" style="height: 150px; object-fit: cover;">
                 </div>
                 @endforeach
@@ -50,14 +50,12 @@
         </div>
         @endif
 
-        {{-- RAB --}}
         <div id="rab-section" style="{{ $package->type == 'paket' ? '' : 'display:none' }}">
-            <h5>Detail RAB</h5>
+            <h5 class="mt-4">Detail RAB</h5>
             <table class="table table-bordered" id="rabTable">
-                <thead>
+                <thead class="table-light">
                     <tr>
                         <th>Item Vendor</th>
-                        <th>Kategori</th>
                         <th>Harga</th>
                         <th>Deskripsi</th>
                         <th>Aksi</th>
@@ -72,17 +70,7 @@
                                 <option value="">-- Pilih Item --</option>
                                 @foreach($vendorServices as $service)
                                 <option value="{{ $service->id }}" {{ $rab->vendor_service_id == $service->id ? 'selected' : '' }}>
-                                    {{ $service->nama_item }} ({{ $service->vendor->kategori ?? '-' }}) - {{ $service->nama_jasa ?? '-' }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </td>
-                        <td>
-                            <select name="packageRabs[category_id][]" class="form-select">
-                                <option value="">-- Pilih Kategori --</option>
-                                @foreach($rabCategories as $cat)
-                                <option value="{{ $cat->id }}" {{ $rab->category_id == $cat->id ? 'selected' : '' }}>
-                                    {{ $cat->nama_kategori }}
+                                    {{ $service->nama_item }} ({{ $service->vendor->kategori ?? '-' }})
                                 </option>
                                 @endforeach
                             </select>
@@ -100,18 +88,37 @@
                     @endforeach
                 </tbody>
             </table>
-            <button type="button" class="btn btn-secondary btn-sm" id="addRabBtn">+ Tambah Item</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="addRabBtn">+ Tambah Item</button>
         </div>
 
-        <div class="mt-4">
-            <button type="submit" class="btn btn-success">Simpan Perubahan</button>
+        <div class="mt-4 text-end">
+            <button type="submit" class="btn btn-success">Simpan</button>
             <a href="{{ route('admin.package.index') }}" class="btn btn-secondary">Batal</a>
         </div>
     </form>
 </div>
+<style>
+    .form-label {
+        font-weight: 600;
+    }
+    .form-control,
+    .form-select {
+        border-radius: 0.5rem;
+        border: 1px solid #000 !important;
+        padding: 0.5rem 1rem;
+        background-color: #fff;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #000;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.25);
+        outline: none;
+    }
+</style>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const typeSelect = document.getElementById('type');
@@ -119,13 +126,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const rabTableBody = document.querySelector('#rabTable tbody');
     const addRabBtn = document.getElementById('addRabBtn');
     const vendorServices = @json($vendorServices);
-    const rabCategories = @json($rabCategories);
 
     function toggleRabSection() {
         rabSection.style.display = typeSelect.value === 'paket' ? '' : 'none';
     }
 
-    function addRabRow(selectedId = '', categoryId = '', harga = '', deskripsi = '') {
+    function addRabRow(selectedId = '', harga = '', deskripsi = '') {
         let row = document.createElement('tr');
 
         let options = `<option value="">-- Pilih Item --</option>`;
@@ -134,19 +140,10 @@ document.addEventListener('DOMContentLoaded', function () {
             options += `<option value="${service.id}" ${selected}>${service.nama_item} (${service.vendor?.kategori ?? '-'})</option>`;
         });
 
-        let kategoriOptions = `<option value="">-- Pilih Kategori --</option>`;
-        rabCategories.forEach(cat => {
-            const selected = categoryId == cat.id ? 'selected' : '';
-            kategoriOptions += `<option value="${cat.id}" ${selected}>${cat.nama_kategori}</option>`;
-        });
-
         row.innerHTML = `
             <td>
                 <input type="hidden" name="packageRabs[id][]" value="">
                 <select name="packageRabs[vendor_service_id][]" class="form-select">${options}</select>
-            </td>
-            <td>
-                <select name="packageRabs[category_id][]" class="form-select">${kategoriOptions}</select>
             </td>
             <td>
                 <input type="number" name="packageRabs[harga_item][]" class="form-control" value="${harga}" min="0">
@@ -164,6 +161,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     addRabBtn.addEventListener('click', () => addRabRow());
     typeSelect.addEventListener('change', toggleRabSection);
+
     document.querySelectorAll('.removeRabBtn').forEach(btn => {
         btn.addEventListener('click', function () {
             this.closest('tr').remove();
@@ -175,21 +173,19 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <style>
-.form-label { font-weight: 600; }
-.form-control, .form-select {
-    border-radius: 0.5rem;
-    padding: 0.5rem 1rem;
-    background-color: #fff;
-    border: 1px solid #000;
-}
-.form-control:focus, .form-select:focus {
-    border-color: #000;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-    outline: none;
-}
-.img-thumbnail {
-    border-radius: 0.5rem;
-    object-fit: cover;
-}
+    .form-label { font-weight: 600; }
+    .form-control, .form-select {
+        border-radius: 0.5rem;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        padding: 0.5rem 0.75rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, .25);
+    }
+    .table-bordered th, .table-bordered td {
+        vertical-align: middle;
+    }
 </style>
-@endsection
+@endpush

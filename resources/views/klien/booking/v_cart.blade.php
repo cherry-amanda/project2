@@ -115,7 +115,12 @@
 
             @forelse($cartItems as $item)
             <div class="cart-item">
-                <img src="{{ asset('images/foto_paket/' . $item->package->foto) }}" class="img-thumbnail">
+                @php
+                    $firstPhoto = $item->package->photos->first();
+                    $photoPath = $firstPhoto ? asset('images/foto_paket/' . $firstPhoto->filename) : asset('images/default.jpg');
+                @endphp
+                <img src="{{ $photoPath }}" class="img-thumbnail">
+
 
                 <div class="cart-item-info">
                     <div class="form-check">

@@ -19,7 +19,12 @@
                     <h5>Detail Acara</h5>
                     @foreach($cartItems as $item)
                         <div class="d-flex align-items-center mb-3 p-2 border rounded">
-                            <img src="{{ asset('images/foto_paket/' . $item->package->foto) }}" width="100" height="70" class="rounded me-3" style="object-fit: cover;">
+                            @php
+                                $firstPhoto = $item->package->photos->first();
+                                $photoPath = $firstPhoto ? asset('images/foto_paket/' . $firstPhoto->filename) : asset('images/default.jpg');
+                            @endphp
+                            <img src="{{ $photoPath }}" width="100" height="70" class="rounded me-3" style="object-fit: cover;">
+
                             <div class="flex-grow-1">
                                 <div class="fw-semibold">{{ $item->package->nama }}</div>
                                 <div class="small text-muted">Jumlah: {{ $item->qty }}</div>

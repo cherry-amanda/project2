@@ -128,6 +128,7 @@
                         <i class="fas fa-tags me-1"></i> {{ ucfirst($p->type) }}
                     </span>
                     <h5 class="card-title fw-bold">{{ $p->nama }}</h5>
+                    <p class="text-muted small">{{ Str::limit($p->deskripsi, 100) }}</p> {{-- Tambahan baris ini --}}
                     <p class="text-success fw-semibold">Rp{{ number_format($p->harga_total, 0, ',', '.') }}</p>
 
                     @if($p->type == 'paket' && $p->packageRabs->count())
